@@ -573,7 +573,16 @@ class Handler(BaseHTTPRequestHandler):
         if not full.startswith(os.path.realpath(WEB) + os.sep) or not os.path.isfile(full):
             return self._send(404, b"not found", "text/plain")
         with open(full, "rb") as f:
-            self._send(200, f.read(), TYPES.get(os.path.splitext(full)[1], "application/octet-stream"))
+            data = f.read()
+        if name == "index.html":
+            # aggiunge la versione ai file collegati: dopo un aggiornamento l'iPad non riusa quelli vecchi
+            try:
+                ver = str(int(max(os.path.getmtime(os.path.join(WEB, n)) for n in os.listdir(WEB))))
+                data = data.replace(b'style.css"', b'style.css?v=' + ver.encode() + b'"')
+                data = data.replace(b'app.js"', b'app.js?v=' + ver.encode() + b'"')
+            except OSError:
+                pass
+        self._send(200, data, TYPES.get(os.path.splitext(full)[1], "application/octet-stream"))
 
     def do_POST(self):
         u = urlparse(self.path)
