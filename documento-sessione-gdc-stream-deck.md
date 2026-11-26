@@ -1,7 +1,7 @@
 # Documento di Sessione — GDC Stream Deck
 
-**Versione:** 4
-**Ultimo aggiornamento:** 2026-11-26 19:10
+**Versione:** 5
+**Ultimo aggiornamento:** 2026-11-26 20:05
 
 ## Vision
 
@@ -97,6 +97,38 @@ perché finora è stata provata solo in modalità simulata su Linux.
 - [2026-11-26] Richiesto dall'utente, non ancora iniziato.
 
 ## Storico sessioni
+
+### [2026-11-26 20:05] Prime prove sull'iPad: cache, rotazione, Edge e pagina Claude
+
+**Riepilogo:** dopo le prime prove su iPad vero sono stati corretti cache vecchia e rotazione dello schermo, sono stati messi Edge al posto di Chrome e il cambio pagina legato al titolo della finestra, ed e' stata disegnata (solo mockup) la pagina Claude con utilizzo e sessioni.
+
+**Cosa e' stato fatto:**
+
+**Bug: dopo l'aggiornamento il pannello mostrava il layout vecchio senza pulsanti**
+
+**Sintomo:** solo data, ora, CPU/RAM e Spotify, nessun pulsante.
+**Causa:** probabile: l'iPad riusava i file vecchi (cache dell'icona Home) mentre il server nuovo mandava la configurazione nuova; non verificato direttamente.
+**Fix applicato:** il server aggiunge una versione ai file collegati in `index.html`; l'utente ha poi visto il pannello corretto (dopo aver svuotato la memoria dell'iPad).
+
+**Bug: dopo una rotazione la pagina era compressa, poi piccola e a sinistra**
+
+**Sintomo:** in verticale pagina compressa in alto; tornando in orizzontale circa il 60% dello schermo.
+**Causa:** probabile: dopo la rotazione iOS fornisce misure della finestra vecchie o in ritardo e la scala veniva calcolata su quelle. Non riprodotto (solo su iPad vero).
+**Fix applicato:** orientamento da `window.orientation`, misure corrette se scambiate, ricalcolo ripetuto dopo 120/400/900/1800 ms; in simulazione (Chromium) tutto ok, **da confermare sull'iPad**.
+
+- Volumi: Edge (`msedge.exe`) al posto di Chrome. Pagina Claude attiva solo con Edge in primo piano e "Claude" nel titolo (`matchTitle`).
+- Tocco su CPU/RAM per la luminosita' ora funziona su iOS (`cursor: pointer`).
+- Mockup pagina Claude: barre utilizzo (5 ore, settimana) e sessioni per finestra di Edge.
+
+**Decisioni prese:**
+- Contesto: l'utente usa Claude Code sul sito in Edge, non in locale.
+- Decisione: utilizzo e sessioni richiedono un'estensione di Edge installata in modalita' sviluppatore; token in tempo reale non disponibili dal sito.
+- Alternative scartate: lettura di log locali (non esistono per il sito); Edge con porta di debug (richiederebbe un profilo separato e farebbe perdere gli accessi).
+- Da rivedere se: l'utente passa a Claude Code in locale (log disponibili) o non vuole l'estensione.
+
+**File consegnati/modificati:** `server.py`, `buttons.json`, `web/app.js`, `web/style.css`, `mockup/pannello.html`, `GDC-stream-deck.zip`, `documento-sessione-gdc-stream-deck.md`
+
+---
 
 ### [2026-11-26 19:10] Nuova interfaccia (stili, volume, pagine) portata nel codice vero
 

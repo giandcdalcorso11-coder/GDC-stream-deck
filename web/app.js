@@ -43,9 +43,15 @@
   }
 
   /* ---- scala: lo "stage" e' 1024x768 (o 768x1024) e viene adattato alla finestra ---- */
-  function currentOrient() { return window.innerHeight > window.innerWidth ? 'port' : 'land'; }
+  // iOS: window.orientation e' affidabile subito; innerWidth/innerHeight dopo una rotazione possono essere
+  // ancora quelli vecchi (scambiati) o arrivare in ritardo: si corregge e si ricalcola piu' volte.
+  function currentOrient() {
+    if (typeof window.orientation === 'number') { return Math.abs(window.orientation) === 90 ? 'land' : 'port'; }
+    return window.innerHeight > window.innerWidth ? 'port' : 'land';
+  }
   function fit() {
-    var w = window.innerWidth, h = window.innerHeight, o = currentOrient();
+    var w = window.innerWidth, h = window.innerHeight, o = currentOrient(), t0;
+    if ((o === 'land' && h > w) || (o === 'port' && w > h)) { t0 = w; w = h; h = t0; }
     var sw = o === 'port' ? 768 : 1024, sh = o === 'port' ? 1024 : 768, k = Math.min(w / sw, h / sh);
     var t = 'scale(' + k + ')';
     stage.style.webkitTransform = t; stage.style.transform = t;
@@ -296,8 +302,14 @@
     });
   }
 
-  window.addEventListener('resize', function () { if (currentOrient() !== orient) { orient = currentOrient(); buildAll(); } else { fit(); } });
-  window.addEventListener('orientationchange', function () { setTimeout(function () { orient = currentOrient(); buildAll(); }, 250); });
+  function relayout() {
+    var o = currentOrient();
+    if (o !== orient) { orient = o; buildAll(); } else { fit(); }
+  }
+  function relayoutSoon() { relayout(); setTimeout(relayout, 120); setTimeout(relayout, 400); setTimeout(relayout, 900); setTimeout(relayout, 1800); }
+  window.addEventListener('resize', relayoutSoon);
+  window.addEventListener('orientationchange', relayoutSoon);
+  window.addEventListener('pageshow', relayoutSoon);
   document.addEventListener('touchmove', function (e) { e.preventDefault(); }, { passive: false });
   document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
 
