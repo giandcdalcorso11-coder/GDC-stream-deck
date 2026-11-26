@@ -18,16 +18,20 @@ body{background:#0b0b0d;color:#ddd;font-family:system-ui,sans-serif;display:flex
 .t-neon{--bg:#07071a;--card:#0d0d2b;--key:#0d0d2b;--text:#e8f9ff;--muted:#7585ba;--accent:#00f0ff;--onacc:#000;--sys:#00f0ff;--audio:#ff2bd6;--work:#ffe14d;--danger:#ff3b6b;--r:12px;--font:"Trebuchet MS",system-ui,sans-serif}
 .t-dj{--bg:repeating-linear-gradient(90deg,#101113 0 2px,#131416 2px 4px);--card:linear-gradient(#202124,#17181a);--key:linear-gradient(#2a2b2f,#18191b);--text:#e6e8ec;--muted:#8d9098;--accent:#ff9d00;--onacc:#000;--sys:#2f9bff;--audio:#2fe06a;--work:#ff9d00;--danger:#ff3b30;--r:3px;--font:"Arial Narrow",Arial,sans-serif}
 #stage{background:var(--bg);color:var(--text);font-family:var(--font);padding:14px;display:grid;gap:12px;
- grid-template-columns:1fr 1fr;grid-template-areas:"c1 c2" "vol vol" "strip strip" "deck deck"}
+ grid-template-columns:240px 150px 1fr;grid-template-areas:"c1 sys c2" "vol vol vol" "strip strip strip" "deck deck deck"}
 #stage.land{width:1024px;height:768px;grid-template-rows:164px 200px 56px 1fr}
 #stage.port{width:768px;height:1024px;grid-template-rows:164px 220px 104px 1fr}
-#c1{grid-area:c1}#c2{grid-area:c2}#vol{grid-area:vol}#strip{grid-area:strip}#deck{grid-area:deck}
+#sys{grid-area:sys}#c1{grid-area:c1}#c2{grid-area:c2}#vol{grid-area:vol}#strip{grid-area:strip}#deck{grid-area:deck}
 .card{background:var(--card);border-radius:var(--r);padding:12px 18px;position:relative;min-height:0}
 /* orologio */
-#clock{font-size:54px;font-weight:300;line-height:1}#clock small{font-size:22px;color:var(--muted);margin-left:8px}
+#c1{display:flex;flex-direction:column;justify-content:center}#clock{font-size:50px;font-weight:300;line-height:1}#clock small{font-size:22px;color:var(--muted);margin-left:8px}
 #date{color:var(--muted);margin-top:4px;font-size:16px}
 .stat{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-top:6px}
 .bar{flex:1;height:8px;background:var(--key);border-radius:8px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+/* cpu/ram piccoli */
+#sys{display:flex;flex-direction:column;justify-content:center;gap:12px;padding:10px 14px}
+.ms{font-size:12px;color:var(--muted);display:flex;justify-content:space-between}.ms b{color:var(--text);font-weight:600}
+.ms+.bar,#sys .bar{height:5px;margin-top:4px;flex:none}
 /* musica */
 #now{display:flex;align-items:center;gap:14px}
 #art{width:72px;height:72px;border-radius:calc(var(--r) - 2px);background:linear-gradient(135deg,var(--accent),var(--audio));display:flex;align-items:center;justify-content:center;color:#000;flex:0 0 auto}
@@ -66,6 +70,7 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .key:active{transform:scale(.96)}
 .key svg.i{width:42px;height:42px;stroke-width:1.6}
 .key[data-c=sys] svg{color:var(--sys)}.key[data-c=audio] svg{color:var(--audio)}.key[data-c=work] svg{color:var(--work)}.key[data-c=danger] svg{color:var(--danger)}
+.key.sm{font-size:13px;gap:6px}.key.sm svg.i{width:28px;height:28px}
 /* neon */
 .t-neon .card,.t-neon .key,.t-neon .tb,.t-neon .tab{border:1px solid rgba(0,240,255,.45);box-shadow:0 0 14px rgba(0,240,255,.12) inset,0 0 10px rgba(0,240,255,.15)}
 .t-neon .tab.on{background:rgba(0,240,255,.18);color:#00f0ff;box-shadow:0 0 12px rgba(0,240,255,.5)}
@@ -79,9 +84,9 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 /* dj hardware */
 .t-dj{text-transform:uppercase;letter-spacing:.06em}
 .t-dj .card{border:1px solid #000;box-shadow:inset 0 1px 0 #3b3d43,0 2px 0 #000}
-.t-dj #c1,.t-dj #c2{background:#05080f;border:1px solid #1c3b6b;box-shadow:inset 0 0 30px rgba(47,155,255,.12);overflow:hidden}
-.t-dj #clock{font-weight:400;color:#7cc4ff;font-family:"Courier New",monospace;font-size:48px}
-.t-dj #date,.t-dj .stat{color:#4f86bd}.t-dj .bar{background:#0b1a30}.t-dj .bar i{background:#2f9bff}
+.t-dj #c1,.t-dj #c2,.t-dj #sys{background:#05080f;border:1px solid #1c3b6b;box-shadow:inset 0 0 30px rgba(47,155,255,.12);overflow:hidden}
+.t-dj #clock{font-weight:400;color:#7cc4ff;font-family:"Courier New",monospace;font-size:44px}
+.t-dj #date,.t-dj .ms{color:#4f86bd}.t-dj .bar{background:#0b1a30}.t-dj .bar i{background:#2f9bff}
 .t-dj #song{color:#7cc4ff;font-size:20px}.t-dj #artist{color:#4f86bd}
 .t-dj #c2>*{position:relative;z-index:1}.t-dj .wave{position:absolute;left:0;right:0;bottom:0;height:60px;opacity:.5;z-index:0}
 .t-dj .tb{background:linear-gradient(#2a2b2f,#18191b);border:1px solid #000;box-shadow:inset 0 1px 0 #44464c}
@@ -91,7 +96,7 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .t-dj .tab{background:linear-gradient(#2a2b2f,#18191b);border:1px solid #000;box-shadow:inset 0 1px 0 #44464c;color:#aeb2bb;font-size:12px}
 .t-dj .tab.on{background:linear-gradient(#ffb23a,#e08400);color:#000}
 .t-dj .key{text-transform:uppercase;position:relative;flex-direction:column-reverse;justify-content:center;border:1px solid #000;box-shadow:inset 0 1px 0 #4a4c53,0 2px 0 #000;font-size:12px;color:#aeb2bb;gap:12px}
-.t-dj .key svg.i{color:#d8dbe2!important;width:36px;height:36px}
+.t-dj .key svg.i{color:#d8dbe2!important;width:36px;height:36px}.t-dj .key.sm svg.i{width:26px;height:26px}.t-dj .key.sm{gap:6px;font-size:11px}
 .t-dj .key::after{content:"";position:absolute;left:18%;right:18%;bottom:9px;height:5px;border-radius:2px;background:var(--led,#ff9d00);box-shadow:0 0 10px var(--led,#ff9d00)}
 .t-dj .key[data-c=sys]{--led:#2f9bff}.t-dj .key[data-c=audio]{--led:#2fe06a}.t-dj .key[data-c=work]{--led:#ff9d00}.t-dj .key[data-c=danger]{--led:#ff3b30}
 .t-dj #master{flex:0 0 330px;flex-direction:row;gap:22px}
@@ -105,7 +110,7 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .vu i.on.g{background:#2fe06a;box-shadow:0 0 6px #2fe06a}.vu i.on.o{background:#ff9d00;box-shadow:0 0 6px #ff9d00}.vu i.on.r{background:#ff3b30;box-shadow:0 0 6px #ff3b30}
 /* verticale */
 #stage.port #master{flex-basis:250px}#stage.port .app{width:130px}#stage.port #apps{gap:6px}
-#stage.port #clock{font-size:46px}#stage.port .t-dj #clock{font-size:42px}
+#stage.port{grid-template-columns:190px 118px 1fr}#stage.port #clock{font-size:40px}#stage.port.t-dj #clock{font-size:34px}#stage.port #date{font-size:13px}
 #stage.port #art{width:56px;height:56px}#stage.port #song{font-size:18px}#stage.port #artist{font-size:13px}
 #stage.port .tb{width:44px;height:38px}#stage.port .tb.big{width:60px}#stage.port .card{padding:10px 14px}
 #stage.port.t-dj #master{flex-basis:250px}
@@ -127,6 +132,7 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 <symbol id="pp" viewBox="0 0 24 24"><path d="M7 5v14M17 5v14"/></symbol>
 <symbol id="mute" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/></symbol>
 <symbol id="note" viewBox="0 0 24 24"><path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></symbol>
+<symbol id="saver" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M14.5 7.5a3 3 0 1 1-3.5-1.5 2.4 2.4 0 0 0 3.5 1.5z"/></symbol>
 <symbol id="left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
 <symbol id="right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
 <symbol id="overview" viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="7" rx="1"/><rect x="13" y="4" width="8" height="7" rx="1"/><rect x="3" y="13" width="8" height="7" rx="1"/><rect x="13" y="13" width="8" height="7" rx="1"/></symbol>
@@ -161,7 +167,7 @@ var apps=[['master','Volume PC'],['spotify','Spotify'],['chrome','Chrome'],['dis
 var theme='windows',orient='land',page='default';
 var DESK=[['left','Desktop'],['right','Desktop'],['overview','Panoramica'],['plus','Nuovo'],['xx','Chiudi']];
 var PAGES={
- default:{n:'Predefinito',k:[['desk','Mostra desktop','sys'],['folder','File','sys'],['shot','Screenshot','work'],['task','Task','sys'],['calc','Calcolatrice','work'],['video','YouTube','audio'],['mail','Gmail','work'],['lock','Blocca PC','danger']]},
+ default:{n:'Predefinito',k:[['video','YouTube','audio',2],['task','Gestione attività','sys',2],['saver','Screen saver','work',2],['desk','Desktop','sys',1,'sm'],['shot','Screenshot','work',1,'sm']]},
  claude:{n:'Claude',k:[['chat','Nuova chat','work'],['term','Claude Code','work'],['search','Cerca','sys'],['folder','Progetti','sys'],['globe','Apri claude.ai','sys'],['mic','Dettatura','audio'],['shot','Screenshot','sys'],['xx','Interrompi','danger']]},
  resolve:{n:'DaVinci',k:[['play','Play / Pausa','audio'],['blade','Taglia','work'],['undo','Annulla','sys'],['save','Salva','sys'],['markin','Segna IN','sys'],['markout','Segna OUT','sys'],['flag','Marker','work'],['trash','Elimina','danger']]},
  bambu:{n:'Bambu Studio',k:[['layers','Slice','work'],['printer','Stampa','danger'],['arrange','Disponi','sys'],['rotate','Orienta','sys'],['move','Sposta','sys'],['scale','Scala','sys'],['cube','Vista iso','sys'],['save','Salva','sys']]}
@@ -216,7 +222,8 @@ function ic(n){return '<svg class="i"><use href="#'+n+'"/></svg>'}
 function build(){
  var st=document.getElementById('stage');st.className='t-'+theme+' '+orient;
  st.innerHTML='';
- var c1=el('section','card','<div id="clock">14:32<small>07</small></div><div id="date">giovedì 26 novembre</div><div class="stat">CPU<span class="bar"><i style="width:32%"></i></span>32%</div><div class="stat">RAM<span class="bar"><i style="width:61%"></i></span>61%</div>');c1.id='c1';
+ var c1=el('section','card','<div id="clock">14:32<small>07</small></div><div id="date">giovedì 26 novembre</div>');c1.id='c1';
+ var sys=el('section','card','<div><div class="ms">CPU<b>32%</b></div><div class="bar"><i style="width:32%"></i></div></div><div><div class="ms">RAM<b>61%</b></div><div class="bar"><i style="width:61%"></i></div></div>');sys.id='sys';
  var c2=el('section','card','<div id="now"><div id="art">'+ic('note').replace('class="i"','class="i" style="width:36px;height:36px"')+'</div><div><div id="song">Instant Crush</div><div id="artist">Daft Punk</div></div></div><div id="tr"><button class="tb">'+ic('prev')+'</button><button class="tb big">'+ic('pp')+'</button><button class="tb">'+ic('next')+'</button><button class="tb">'+ic('mute')+'</button></div>');c2.id='c2';
  var vol=el('section','card');vol.id='vol';var m=el('div');m.id='master';var a=el('div');a.id='apps';
  m.appendChild(ctl('master','lg'));
@@ -228,8 +235,8 @@ function build(){
  Object.keys(PAGES).forEach(function(k){var b=el('button','tab'+(k==page?' on':''),PAGES[k].n);b.onclick=function(){page=k;build()};tabs.appendChild(b)});
  strip.appendChild(db);strip.appendChild(tabs);
  var dk=el('section');dk.id='deck';
- PAGES[page].k.forEach(function(k){var b=el('button','key',ic(k[0])+'<span>'+k[1]+'</span>');b.setAttribute('data-c',k[2]);dk.appendChild(b)});
- [c1,c2,vol,strip,dk].forEach(function(n){st.appendChild(n)});
+ PAGES[page].k.forEach(function(k){var b=el('button','key'+(k[4]?' '+k[4]:''),ic(k[0])+'<span>'+k[1]+'</span>');b.setAttribute('data-c',k[2]);if(k[3]>1){b.style.gridColumn='span '+k[3]}dk.appendChild(b)});
+ [c1,sys,c2,vol,strip,dk].forEach(function(n){st.appendChild(n)});
  if(theme=='dj'){var w=document.createElementNS('http://www.w3.org/2000/svg','svg');w.setAttribute('class','wave');w.setAttribute('viewBox','0 0 500 60');w.setAttribute('preserveAspectRatio','none');var h='';for(var x=0;x<500;x+=4){var q=7+Math.abs(Math.sin(x/17)*Math.sin(x/53))*22;h+='<rect x="'+x+'" y="'+(30-q)+'" width="2" height="'+(q*2)+'" fill="'+(x<220?'#2f9bff':'#1c4f8a')+'"/>'}w.innerHTML=h;c2.appendChild(w)}
  var sty=document.getElementById('sty');sty.innerHTML='<span>Stile</span>';
  for(var t in THEMES){(function(t){var b=el('button',t==theme?'on':'',NAMES[t]+({knob:' · knob',slider:' · slider',fader:' · fader'}[THEMES[t]]));b.onclick=function(){theme=t;build()};sty.appendChild(b)})(t)}
