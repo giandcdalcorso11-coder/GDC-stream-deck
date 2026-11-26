@@ -3,7 +3,7 @@
 
   "volumeApps": [
     { "id": "spotify", "label": "Spotify", "exe": "spotify.exe" },
-    { "id": "chrome",  "label": "Chrome",  "exe": "chrome.exe" },
+    { "id": "edge",    "label": "Edge",    "exe": "msedge.exe" },
     { "id": "discord", "label": "Discord", "exe": "discord.exe" }
   ],
 
@@ -27,7 +27,7 @@
       ]
     },
     {
-      "id": "claude", "name": "Claude", "match": ["claude.exe"],
+      "id": "claude", "name": "Claude", "match": ["msedge.exe"], "matchTitle": ["Claude"],
       "buttons": [
         { "id": "cl-new",    "label": "Nuova chat",     "icon": "chat",   "cat": "work",   "action": { "type": "url", "url": "https://claude.ai/new" } },
         { "id": "cl-code",   "label": "Claude Code",    "icon": "term",   "cat": "work",   "action": { "type": "run", "path": "wt.exe", "args": ["claude"] } },

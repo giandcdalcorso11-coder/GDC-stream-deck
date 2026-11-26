@@ -117,13 +117,20 @@ if IS_WIN:
         _pid_exe[pid] = exe
         return exe
 
-    def foreground_exe():
+    def foreground_info():
+        """(programma, titolo finestra) di quello in primo piano."""
         hwnd = user32.GetForegroundWindow()
         if not hwnd:
-            return ""
+            return "", ""
         pid = wintypes.DWORD()
         user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
-        return _exe_of(pid.value)
+        n = user32.GetWindowTextLengthW(hwnd)
+        title = ""
+        if n > 0:
+            buf = ctypes.create_unicode_buffer(n + 1)
+            user32.GetWindowTextW(hwnd, buf, n + 1)
+            title = buf.value
+        return _exe_of(pid.value), title
 
     def spotify_titles():
         """Titoli delle finestre di Spotify.exe (None se Spotify non e' aperto)."""
@@ -320,8 +327,8 @@ else:
     def spotify_titles():
         return None
 
-    def foreground_exe():
-        return os.environ.get("PANEL_DEMO_FG", "")
+    def foreground_info():
+        return os.environ.get("PANEL_DEMO_FG", ""), os.environ.get("PANEL_DEMO_TITLE", "")
 
     def cpu_percent():
         try:
@@ -456,10 +463,18 @@ def read_spotify():
     return {"running": True, "playing": False, "title": "", "artist": ""}
 
 
-def pick_profile(cfg, fg):
+def pick_profile(cfg, fg, title=""):
+    """Prima pagina che corrisponde: 'match' = programmi, 'matchTitle' = testo nel titolo della finestra."""
     for p in cfg["pages"]:
-        if fg and fg in [m.lower() for m in p.get("match", [])]:
-            return p.get("id", "default")
+        progs = [m.lower() for m in p.get("match", [])]
+        texts = [t.lower() for t in p.get("matchTitle", [])]
+        if not progs and not texts:
+            continue
+        if progs and fg not in progs:
+            continue
+        if texts and not any(t in title.lower() for t in texts):
+            continue
+        return p.get("id", "default")
     return "default"
 
 
@@ -467,11 +482,11 @@ def sampler():
     while True:
         try:
             cfg = load_config()[0]
-            fg = foreground_exe()
+            fg, title = foreground_info()
             STATE["spotify"] = read_spotify()
             STATE["stats"] = {"cpu": cpu_percent(), "ram": ram_percent()}
             STATE["fg"] = fg
-            STATE["profile"] = pick_profile(cfg, fg)
+            STATE["profile"] = pick_profile(cfg, fg, title)
         except Exception as e:
             log("errore lettura stato:", e)
         time.sleep(1)

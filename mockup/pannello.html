@@ -160,8 +160,8 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 <script>
 var THEMES={windows:'slider',apple:'knob',neon:'knob',dj:'fader'};
 var NAMES={windows:'Windows',apple:'Apple Glass',neon:'Neon',dj:'DJ'};
-var vals={master:42,spotify:70,chrome:35,discord:55};
-var apps=[['master','Volume PC'],['spotify','Spotify'],['chrome','Chrome'],['discord','Discord']];
+var vals={master:42,spotify:70,edge:35,discord:55};
+var apps=[['master','Volume PC'],['spotify','Spotify'],['edge','Edge'],['discord','Discord']];
 var theme='windows',orient='land',page='default';
 var DESK=[['left','Desktop<br>precedente','sys',0],['right','Desktop<br>successivo','sys',0],['overview','Panoramica<br>di tutte le app','work',1],['plus','Nuovo<br>desktop','audio',0],['xx','Chiudi<br>desktop','danger',0]];
 var PAGES={
@@ -228,7 +228,7 @@ function build(){
  var c2=el('section','card','<div id="now"><div id="art">'+ic('note').replace('class="i"','class="i" style="width:36px;height:36px"')+'</div><div><div id="song">Instant Crush</div><div id="artist">Daft Punk</div></div></div><div id="tr"><button class="tb">'+ic('prev')+'</button><button class="tb big">'+ic('pp')+'</button><button class="tb">'+ic('next')+'</button><button class="tb">'+ic('mute')+'</button></div>');c2.id='c2';
  var vol=el('section','card');vol.id='vol';var m=el('div');m.id='master';var a=el('div');a.id='apps';
  m.appendChild(ctl('master','lg'));
- ['spotify','chrome','discord'].forEach(function(id){var d=el('div','app');d.appendChild(ctl(id,'sm'));a.appendChild(d)});
+ ['spotify','edge','discord'].forEach(function(id){var d=el('div','app');d.appendChild(ctl(id,'sm'));a.appendChild(d)});
  vol.appendChild(m);vol.appendChild(a);
  var strip=el('section');strip.id='strip';var db=el('section');db.id='deskrow';
  DESK.forEach(function(d){var b=el('button','key dkb'+(d[3]?' wide':''),ic(d[0])+'<span>'+d[1]+'</span>');b.setAttribute('data-c',d[2]);db.appendChild(b)});
