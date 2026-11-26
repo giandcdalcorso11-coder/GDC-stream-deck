@@ -53,11 +53,11 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .sl.lg{height:54px}.sl.sm{height:34px}
 .t-windows .sl .tk,.t-windows .sl .fl{height:4px;border-radius:2px}.t-windows .sl.lg .tk,.t-windows .sl.lg .fl{height:6px}
 .t-windows .sl .th{width:16px;height:16px;border-radius:50%;background:var(--accent);border:3px solid #fff}.t-windows .sl.lg .th{width:24px;height:24px}
-.kn{touch-action:none;cursor:ns-resize;display:block}.kn text{fill:var(--text);font-family:var(--font);text-anchor:middle}
+.kn{touch-action:none;cursor:grab;display:block}.kn text{fill:var(--text);font-family:var(--font);text-anchor:middle}
 /* striscia: desktop + pagine */
 #strip{display:flex;gap:12px;align-items:stretch}
 #deskbar{display:flex;gap:8px;flex:1.3}#tabs{display:flex;gap:8px;flex:1}
-.sb{flex:1;width:auto;height:auto;flex-direction:column;gap:2px;font-size:11px;padding:0 4px}
+.sb{flex:1;width:auto;height:auto;flex-direction:column;gap:2px;font-size:10px;padding:0 2px;line-height:1.1;text-align:center}
 .sb svg.i{width:22px;height:22px}
 .tab{flex:1;border:0;border-radius:calc(var(--r) - 2px);background:var(--key);color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:0 6px}
 .tab.on{background:var(--accent);color:var(--onacc);font-weight:600}
@@ -165,9 +165,9 @@ var NAMES={windows:'Windows',apple:'Apple Glass',neon:'Neon',dj:'DJ'};
 var vals={master:42,spotify:70,chrome:35,discord:55};
 var apps=[['master','Volume PC'],['spotify','Spotify'],['chrome','Chrome'],['discord','Discord']];
 var theme='windows',orient='land',page='default';
-var DESK=[['left','Desktop'],['right','Desktop'],['overview','Panoramica'],['plus','Nuovo'],['xx','Chiudi']];
+var SMALL=[['video','YouTube'],['task','Gestione attività'],['saver','Screen saver'],['desk','Desktop'],['shot','Screenshot']];
 var PAGES={
- default:{n:'Predefinito',k:[['video','YouTube','audio',2],['task','Gestione attività','sys',2],['saver','Screen saver','work',2],['desk','Desktop','sys',1,'sm'],['shot','Screenshot','work',1,'sm']]},
+ default:{n:'Predefinito',rows:{land:2,port:3},k:[['left','Desktop precedente','sys',1],['right','Desktop successivo','sys',1],['overview','Panoramica','work',2],['plus','Nuovo desktop','audio',[2,1]],['xx','Chiudi desktop','danger',[2,1]]]},
  claude:{n:'Claude',k:[['chat','Nuova chat','work'],['term','Claude Code','work'],['search','Cerca','sys'],['folder','Progetti','sys'],['globe','Apri claude.ai','sys'],['mic','Dettatura','audio'],['shot','Screenshot','sys'],['xx','Interrompi','danger']]},
  resolve:{n:'DaVinci',k:[['play','Play / Pausa','audio'],['blade','Taglia','work'],['undo','Annulla','sys'],['save','Salva','sys'],['markin','Segna IN','sys'],['markout','Segna OUT','sys'],['flag','Marker','work'],['trash','Elimina','danger']]},
  bambu:{n:'Bambu Studio',k:[['layers','Slice','work'],['printer','Stampa','danger'],['arrange','Disponi','sys'],['rotate','Orienta','sys'],['move','Sposta','sys'],['scale','Scala','sys'],['cube','Vista iso','sys'],['save','Salva','sys']]}
@@ -213,7 +213,10 @@ function ctl(id,size){
   (ap?'<path d="'+arc2(ri)+'" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round"/>':'')+
   '<line x1="'+ind2[0]+'" y1="'+ind2[1]+'" x2="'+ind[0]+'" y2="'+ind[1]+'" stroke="'+(ap?'#fff':'#00f0ff')+'" stroke-width="'+(size=='lg'?5:3)+'" stroke-linecap="round"/>'+
   (size=='lg'?'<text x="'+c+'" y="'+(c+9)+'" font-size="28">'+Math.round(vals[id])+'</text>':'');setLabel()}
- var y0,v0;svg.addEventListener('pointerdown',function(e){svg.setPointerCapture(e.pointerId);y0=e.clientY;v0=vals[id];svg.onpointermove=function(e){vals[id]=clamp(v0+(y0-e.clientY)/stageScale()/1.5);drawK()}});
+ // gesto circolare: si segue l'angolo del dito attorno al centro (orario = piu' volume); 270 gradi = 0-100
+ var prev=null;
+ function ang(e){var r=svg.getBoundingClientRect(),dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);return {a:Math.atan2(dy,dx)*180/Math.PI,d:Math.sqrt(dx*dx+dy*dy)/r.width*D}}
+ svg.addEventListener('pointerdown',function(e){svg.setPointerCapture(e.pointerId);prev=ang(e);svg.onpointermove=function(e){var c=ang(e);if(c.d<10||prev.d<10){prev=c;return}var d=c.a-prev.a;if(d>180)d-=360;if(d<-180)d+=360;vals[id]=clamp(vals[id]+d/270*100);prev=c;drawK()}});
  svg.addEventListener('pointerup',function(){svg.onpointermove=null});
  box.appendChild(svg);box.appendChild(label);drawK();return box;
 }
@@ -230,12 +233,13 @@ function build(){
  ['spotify','chrome','discord'].forEach(function(id){var d=el('div','app');d.appendChild(ctl(id,'sm'));a.appendChild(d)});
  vol.appendChild(m);vol.appendChild(a);
  var strip=el('section');strip.id='strip';var db=el('div');db.id='deskbar';
- DESK.forEach(function(d){db.appendChild(el('button','tb sb',ic(d[0])+'<span>'+d[1]+'</span>'))});
+ SMALL.forEach(function(d){db.appendChild(el('button','tb sb',ic(d[0])+'<span>'+d[1]+'</span>'))});
  var tabs=el('div');tabs.id='tabs';
  Object.keys(PAGES).forEach(function(k){var b=el('button','tab'+(k==page?' on':''),PAGES[k].n);b.onclick=function(){page=k;build()};tabs.appendChild(b)});
  strip.appendChild(db);strip.appendChild(tabs);
  var dk=el('section');dk.id='deck';
- PAGES[page].k.forEach(function(k){var b=el('button','key'+(k[4]?' '+k[4]:''),ic(k[0])+'<span>'+k[1]+'</span>');b.setAttribute('data-c',k[2]);if(k[3]>1){b.style.gridColumn='span '+k[3]}dk.appendChild(b)});
+ PAGES[page].k.forEach(function(k){var b=el('button','key'+(k[4]?' '+k[4]:''),ic(k[0])+'<span>'+k[1]+'</span>');b.setAttribute('data-c',k[2]);var sp=Array.isArray(k[3])?k[3][orient=='land'?0:1]:k[3];if(sp>1){b.style.gridColumn='span '+sp}dk.appendChild(b)});
+ var rw=PAGES[page].rows;if(rw){dk.style.gridTemplateRows='repeat('+rw[orient]+',1fr)'}
  [c1,sys,c2,vol,strip,dk].forEach(function(n){st.appendChild(n)});
  if(theme=='dj'){var w=document.createElementNS('http://www.w3.org/2000/svg','svg');w.setAttribute('class','wave');w.setAttribute('viewBox','0 0 500 60');w.setAttribute('preserveAspectRatio','none');var h='';for(var x=0;x<500;x+=4){var q=7+Math.abs(Math.sin(x/17)*Math.sin(x/53))*22;h+='<rect x="'+x+'" y="'+(30-q)+'" width="2" height="'+(q*2)+'" fill="'+(x<220?'#2f9bff':'#1c4f8a')+'"/>'}w.innerHTML=h;c2.appendChild(w)}
  var sty=document.getElementById('sty');sty.innerHTML='<span>Stile</span>';
