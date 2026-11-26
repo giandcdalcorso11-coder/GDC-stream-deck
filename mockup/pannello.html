@@ -69,6 +69,24 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .key svg.i{width:42px;height:42px;stroke-width:1.6}
 .key[data-c=sys] svg{color:var(--sys)}.key[data-c=audio] svg{color:var(--audio)}.key[data-c=work] svg{color:var(--work)}.key[data-c=danger] svg{color:var(--danger)}
 .key.sm{font-size:13px;gap:6px}.key.sm svg.i{width:28px;height:28px}
+
+/* pagina Claude: utilizzo + sessioni */
+.cv{grid-column:1/-1;grid-row:1/-1;display:grid;grid-template-columns:310px 1fr;grid-gap:12px;min-height:0}
+#stage.port .cv{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+.panel{background:var(--key);border-radius:var(--r);padding:12px 16px;min-height:0;overflow:hidden}
+.panel h4{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.ub{margin-bottom:9px}.ub .t{display:flex;justify-content:space-between;font-size:14px}.ub .bar{height:9px;margin-top:5px}.ub small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.ub.warn .bar i{background:var(--danger)}
+.cvb{display:flex;margin-top:4px}.cvb .tb{width:auto;flex:1;height:38px;font-size:12px;padding:0 6px}.cvb .tb+.tb{margin-left:8px}
+.sr{display:flex;align-items:center;margin-bottom:7px;min-height:30px}
+.sr .pn{width:170px;flex:none;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr .dn{font-size:10px;color:var(--muted);border:1px solid currentColor;border-radius:9px;padding:1px 6px;margin-right:10px;flex:none}
+.sr .chs{flex:1;overflow:hidden;white-space:nowrap}
+.ch{display:inline-block;padding:6px 11px;margin-right:6px;border-radius:calc(var(--r) - 2px);background:rgba(128,128,128,.22);font-size:12px;max-width:190px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.ch.on{background:var(--accent);color:var(--onacc);font-weight:600}
+.t-apple .panel{-webkit-backdrop-filter:blur(26px) saturate(180%);backdrop-filter:blur(26px) saturate(180%);border:1px solid rgba(255,255,255,.35);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.65),0 10px 30px rgba(0,0,0,.3)}
+.t-neon .panel{border:1px solid rgba(0,240,255,.45);box-shadow:0 0 14px rgba(0,240,255,.12) inset}
+.t-dj .panel{border:1px solid #000;box-shadow:inset 0 1px 0 #4a4c53,0 2px 0 #000}.t-dj .ub .bar i{background:#2fe06a}.t-dj .ub.warn .bar i{background:#ff3b30}
 /* neon */
 .t-neon .card,.t-neon .key,.t-neon .tb,.t-neon .tab{border:1px solid rgba(0,240,255,.45);box-shadow:0 0 14px rgba(0,240,255,.12) inset,0 0 10px rgba(0,240,255,.15)}
 .t-neon .tab.on{background:rgba(0,240,255,.18);color:#00f0ff;box-shadow:0 0 12px rgba(0,240,255,.5)}
@@ -166,7 +184,7 @@ var theme='windows',orient='land',page='default';
 var DESK=[['left','Desktop<br>precedente','sys',0],['right','Desktop<br>successivo','sys',0],['overview','Panoramica<br>di tutte le app','work',1],['plus','Nuovo<br>desktop','audio',0],['xx','Chiudi<br>desktop','danger',0]];
 var PAGES={
  default:{n:'Predefinito',k:[['video','YouTube','audio',2],['task','Gestione attività','sys',2],['saver','Screen saver','work',2],['desk','Mostra desktop','sys',1,'sm'],['shot','Screenshot','work',1,'sm']]},
- claude:{n:'Claude',k:[['chat','Nuova chat','work'],['term','Claude Code','work'],['search','Cerca','sys'],['folder','Progetti','sys'],['globe','Apri claude.ai','sys'],['mic','Dettatura','audio'],['shot','Screenshot','sys'],['xx','Interrompi','danger']]},
+ claude:{n:'Claude',view:true,k:[['chat','Nuova chat','work'],['term','Claude Code','work'],['search','Cerca','sys'],['folder','Progetti','sys'],['globe','Apri claude.ai','sys'],['mic','Dettatura','audio'],['shot','Screenshot','sys'],['xx','Interrompi','danger']]},
  resolve:{n:'DaVinci',k:[['play','Play / Pausa','audio'],['blade','Taglia','work'],['undo','Annulla','sys'],['save','Salva','sys'],['markin','Segna IN','sys'],['markout','Segna OUT','sys'],['flag','Marker','work'],['trash','Elimina','danger']]},
  bambu:{n:'Bambu Studio',k:[['layers','Slice','work'],['printer','Stampa','danger'],['arrange','Disponi','sys'],['rotate','Orienta','sys'],['move','Sposta','sys'],['scale','Scala','sys'],['cube','Vista iso','sys'],['save','Salva','sys']]}
 };
@@ -220,6 +238,17 @@ function ctl(id,size){
 }
 function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html)e.innerHTML=html;return e}
 function ic(n){return '<svg class="i"><use href="#'+n+'"/></svg>'}
+
+function claudeView(){
+ var SES=[{p:'GDC stream deck',d:1,t:['Pannello iPad: layout',"Revisione server"],on:0},{p:'Sito cliente',d:2,t:['Fix checkout','Test e2e','Refactor carrello'],on:1},{p:'Newsletter',d:3,t:['Bozza novembre'],on:0}];
+ var cv=el('div','cv');
+ var u=el('div','panel','<h4>Utilizzo</h4>'+
+  '<div class="ub"><div class="t"><span>Sessione 5 ore</span><b>62%</b></div><div class="bar"><i style="width:62%"></i></div><small>si azzera tra 2 h 10 min</small></div>'+
+  '<div class="ub warn"><div class="t"><span>Settimana</span><b>88%</b></div><div class="bar"><i style="width:88%"></i></div><small>si azzera gio 09:00</small></div>');
+ var bb=el('div','cvb');bb.appendChild(el('button','tb',ic('chat')+'&nbsp;Nuova'));bb.appendChild(el('button','tb',ic('globe')+'&nbsp;Utilizzo'));u.appendChild(bb);
+ var ss=el('div','panel','<h4>Sessioni aperte (una riga per finestra di Edge)</h4>');
+ SES.forEach(function(r){var row=el('div','sr','<div class="pn">'+r.p+'</div><div class="dn">Desktop '+r.d+'</div>');var c=el('div','chs');r.t.forEach(function(t,i){c.appendChild(el('span','ch'+(i==r.on?' on':''),t))});row.appendChild(c);ss.appendChild(row)});
+ cv.appendChild(u);cv.appendChild(ss);return cv}
 function build(){
  var st=document.getElementById('stage');st.className='t-'+theme+' '+orient;
  st.innerHTML='';
@@ -236,7 +265,7 @@ function build(){
  Object.keys(PAGES).forEach(function(k){var b=el('button','tab'+(k==page?' on':''),PAGES[k].n);b.onclick=function(){page=k;build()};tabs.appendChild(b)});
  strip.appendChild(tabs);
  var dk=el('section');dk.id='deck';
- PAGES[page].k.forEach(function(k){var b=el('button','key'+(k[4]?' '+k[4]:''),ic(k[0])+'<span>'+k[1]+'</span>');b.setAttribute('data-c',k[2]);var sp=Array.isArray(k[3])?k[3][orient=='land'?0:1]:k[3];if(sp>1){b.style.gridColumn='span '+sp}dk.appendChild(b)});
+ if(PAGES[page].view){dk.appendChild(claudeView())}else PAGES[page].k.forEach(function(k){var b=el('button','key'+(k[4]?' '+k[4]:''),ic(k[0])+'<span>'+k[1]+'</span>');b.setAttribute('data-c',k[2]);var sp=Array.isArray(k[3])?k[3][orient=='land'?0:1]:k[3];if(sp>1){b.style.gridColumn='span '+sp}dk.appendChild(b)});
  var rw=PAGES[page].rows;if(rw){dk.style.gridTemplateRows='repeat('+rw[orient]+',1fr)'}
  [c1,sys,c2,vol,db,strip,dk].forEach(function(n){st.appendChild(n)});
  if(theme=='dj'){var w=document.createElementNS('http://www.w3.org/2000/svg','svg');w.setAttribute('class','wave');w.setAttribute('viewBox','0 0 500 60');w.setAttribute('preserveAspectRatio','none');var h='';for(var x=0;x<500;x+=4){var q=7+Math.abs(Math.sin(x/17)*Math.sin(x/53))*22;h+='<rect x="'+x+'" y="'+(30-q)+'" width="2" height="'+(q*2)+'" fill="'+(x<220?'#2f9bff':'#1c4f8a')+'"/>'}w.innerHTML=h;c2.appendChild(w)}
