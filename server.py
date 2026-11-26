@@ -236,7 +236,7 @@ def run_action(a):
 
 
 # ---------------------------------------------------------------- stato (aggiornato ogni secondo)
-IDLE_TITLES = ("", "spotify", "spotify free", "spotify premium")
+IDLE_TITLES = ("", "spotify", "spotify free", "spotify premium", "advertisement")
 STATE = {"spotify": {"running": False, "playing": False, "title": "", "artist": ""},
          "stats": {"cpu": 0, "ram": 0}}
 
@@ -319,8 +319,14 @@ class Handler(BaseHTTPRequestHandler):
         q = parse_qs(u.query)
         if not self._authorized(q):
             return self._send(401, {"error": "token"})
+        # Solo application/json: una pagina web esterna non puo' inviarlo senza una richiesta
+        # preliminare (CORS) che questo server non accetta -> protezione dai comandi da altri siti.
+        if not self.headers.get("Content-Type", "").lower().startswith("application/json"):
+            return self._send(415, {"error": "serve application/json"})
         try:
             n = int(self.headers.get("Content-Length", 0))
+            if n < 0 or n > 4096:
+                return self._send(413, {"error": "richiesta troppo grande"})
             body = json.loads(self.rfile.read(n) or b"{}")
             if u.path == "/api/media":
                 run_action({"type": "media", "cmd": body.get("cmd")})

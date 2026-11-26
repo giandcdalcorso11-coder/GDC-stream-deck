@@ -1,7 +1,7 @@
 # Documento di Sessione — GDC Stream Deck
 
-**Versione:** 1
-**Ultimo aggiornamento:** 2026-11-26 07:31
+**Versione:** 2
+**Ultimo aggiornamento:** 2026-11-26 08:10
 
 ## Vision
 
@@ -34,12 +34,13 @@ perché finora è stata provata solo in modalità simulata su Linux.
 
 **Obiettivo:** confermare che sul PC Windows funzionino lettura di Spotify, tasti multimediali, scorciatoie e avvio programmi.
 
-**Decisioni progettuali:** nessuna ancora.
+**Decisioni progettuali:** il server accetta POST solo con `Content-Type: application/json` (protezione da comandi inviati da altri siti).
 
 **Criterio di completamento:** conferma dell'utente dopo la prova di: brano e artista corretti, tasti multimediali, almeno un pulsante per tipo (`hotkey`, `url`, `run`, `lock`).
 
 **Note (cronologia dello step):**
 - [2026-11-25] Da fare al primo avvio sul PC; nessun esito ancora.
+- [2026-11-26] Revisione del codice Windows fatta a tavolino (nessun difetto trovato nelle chiamate ctypes, tasti e CPU/RAM), ma ancora non provato su Windows vero.
 
 ### Step 3 — Prova su iPad e avvio automatico
 
@@ -47,12 +48,13 @@ perché finora è stata provata solo in modalità simulata su Linux.
 
 **Obiettivo:** verificare il pannello sull'iPad Air 1 reale (Safari 12), con Home, Blocco automatico su Mai e Accesso Guidato.
 
-**Decisioni progettuali:** nessuna ancora.
+**Decisioni progettuali:** nessuna app nativa; si usa solo il collegamento Home creato da Safari (Condividi → Aggiungi a Home).
 
 **Criterio di completamento:** il pannello resta aperto in carica e si ricollega da solo quando il PC si riaccende.
 
 **Note (cronologia dello step):**
 - [2026-11-25] Da fare.
+- [2026-11-26] L'utente conferma: nessuna app nativa, solo collegamento Home da Safari.
 
 ### Step 4 — Copertina Spotify (opzionale)
 
@@ -68,6 +70,33 @@ perché finora è stata provata solo in modalità simulata su Linux.
 - [2026-11-25] Proposto all'utente, non ancora deciso.
 
 ## Storico sessioni
+
+### [2026-11-26 08:10] Revisione del codice per Windows e rafforzamento del server
+
+**Riepilogo:** letti `server.py` e `web/` per cercare problemi su Windows/iOS 12 e aggiunte due protezioni al server; l'utente ha confermato che sull'iPad si userà solo il collegamento Home da Safari.
+
+**Cosa è stato fatto:**
+- Revisione di `server.py`, `web/app.js`, `index.html`, `style.css`, `start.bat`, `start_hidden.vbs`: chiamate ctypes, tasti, calcolo CPU, compatibilità ES5/CSS con Safari 12 e `pythonw` senza console risultano corretti leggendo il codice (non provati su Windows).
+
+**Bug: i comandi potevano essere inviati da qualsiasi sito aperto in un browser sulla stessa rete**
+
+**Sintomo:** nessuno osservato; rischio trovato in revisione. Un POST a `/api/press` con tipo `text/plain` veniva accettato e il corpo letto come JSON.
+**Causa:** il server non controllava il `Content-Type`, quindi una pagina esterna poteva inviare la richiesta senza controllo preventivo del browser (CORS). Con token vuoto (impostazione predefinita) bastava conoscere l'indirizzo e l'`id` di un pulsante.
+**Fix applicato:** i POST senza `application/json` ricevono 415; corpo massimo 4096 byte (413). Verificato su Linux in modalità simulata: JSON 200, `text/plain` e senza tipo 415.
+
+- Aggiunto "advertisement" ai titoli considerati inattivi, per non mostrare "Advertisement" come brano (ipotesi, da verificare su Spotify vero).
+
+**Decisioni prese:**
+- Contesto: lo Step 3 prevedeva avvio sull'iPad.
+- Decisione: nessuna app nativa, solo collegamento Home da Safari.
+- Alternative scartate: app nativa.
+- Da rivedere se: serve l'avvio automatico dopo il riavvio dell'iPad (con questa scelta non è possibile).
+
+**File consegnati/modificati:** `server.py`, `documento-sessione-gdc-stream-deck.md`
+
+**Impatto su Vision/Pipeline:** Step 2 e Step 3 aggiornati (decisioni e note).
+
+---
 
 ### [2026-11-26 07:31] Dall'analisi di PhoneBox al pannello per iPad nel repo GDC-stream-deck
 
