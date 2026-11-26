@@ -1,7 +1,7 @@
 # Documento di Sessione — GDC Stream Deck
 
-**Versione:** 2
-**Ultimo aggiornamento:** 2026-11-26 08:10
+**Versione:** 3
+**Ultimo aggiornamento:** 2026-11-26 09:00
 
 ## Vision
 
@@ -30,7 +30,7 @@ perché finora è stata provata solo in modalità simulata su Linux.
 
 ### Step 2 — Verifica su PC Windows
 
-**Stato:** da fare
+**Stato:** in corso
 
 **Obiettivo:** confermare che sul PC Windows funzionino lettura di Spotify, tasti multimediali, scorciatoie e avvio programmi.
 
@@ -41,6 +41,7 @@ perché finora è stata provata solo in modalità simulata su Linux.
 **Note (cronologia dello step):**
 - [2026-11-25] Da fare al primo avvio sul PC; nessun esito ancora.
 - [2026-11-26] Revisione del codice Windows fatta a tavolino (nessun difetto trovato nelle chiamate ctypes, tasti e CPU/RAM), ma ancora non provato su Windows vero.
+- [2026-11-26] Prova su PC Windows: l'utente conferma che il server parte e i pulsanti funzionano. Ancora da confermare: brano/artista di Spotify e tasti multimediali.
 
 ### Step 3 — Prova su iPad e avvio automatico
 
@@ -70,6 +71,20 @@ perché finora è stata provata solo in modalità simulata su Linux.
 - [2026-11-25] Proposto all'utente, non ancora deciso.
 
 ## Storico sessioni
+
+### [2026-11-26 09:00] Prima prova su Windows riuscita
+
+**Riepilogo:** l'utente ha avviato il server sul PC Windows e ha confermato che il server funziona e i pulsanti funzionano; restano da provare Spotify e tasti multimediali.
+
+**Cosa è stato fatto:**
+- Consegnato lo zip del progetto per il PC; prova eseguita dall'utente.
+- Step 2 portato a "in corso" (parte confermata dall'utente, il resto da verificare).
+
+**File consegnati/modificati:** `documento-sessione-gdc-stream-deck.md`
+
+**Impatto su Vision/Pipeline:** Step 2 in corso.
+
+---
 
 ### [2026-11-26 08:10] Revisione del codice per Windows e rafforzamento del server
 
