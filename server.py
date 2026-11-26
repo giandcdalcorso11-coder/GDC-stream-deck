@@ -4,6 +4,8 @@
 Serve la pagina web in web/ e offre alla pagina:
   - stato di Spotify (brano/artista, letto dal titolo della finestra dell'app desktop)
   - uso di CPU e RAM del PC
+  - volume di sistema e delle singole app (API audio di Windows, via ctypes)
+  - programma in primo piano, per cambiare pagina da solo
   - pulsanti personalizzabili (buttons.json) in stile Stream Deck
 Su Windows invia tasti e comandi; su altri sistemi li simula (utile per provare).
 """
@@ -23,7 +25,8 @@ CONFIG = os.path.join(BASE, "buttons.json")
 IS_WIN = os.name == "nt"
 DEMO = os.environ.get("PANEL_DEMO") == "1"
 
-DEFAULT_CFG = {"settings": {"port": 8080, "token": "", "columns": 4, "columnsPortrait": 3}, "buttons": []}
+DEFAULT_CFG = {"settings": {"port": 8080, "token": "", "theme": "windows"},
+               "volumeApps": [], "desktop": [], "pages": []}
 
 
 def log(*a):
@@ -47,12 +50,21 @@ def load_config():
             with open(CONFIG, encoding="utf-8") as f:
                 data = json.load(f)
             data.setdefault("settings", {})
-            data.setdefault("buttons", [])
+            for k in ("volumeApps", "desktop", "pages"):
+                data.setdefault(k, [])
             _cfg["data"] = data
         except Exception as e:
             log("buttons.json non valido, tengo la versione precedente:", e)
         _cfg["mtime"] = m
     return _cfg["data"], _cfg["mtime"]
+
+
+def all_buttons(cfg):
+    for b in cfg["desktop"]:
+        yield b
+    for p in cfg["pages"]:
+        for b in p.get("buttons", []):
+            yield b
 
 
 # ---------------------------------------------------------------- Windows API
@@ -62,6 +74,7 @@ if IS_WIN:
 
     user32 = ctypes.windll.user32
     kernel32 = ctypes.windll.kernel32
+    ole32 = ctypes.windll.ole32
     kernel32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
     kernel32.OpenProcess.restype = wintypes.HANDLE
     kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
@@ -71,6 +84,9 @@ if IS_WIN:
     user32.GetClassNameW.argtypes = [wintypes.HWND, wintypes.LPWSTR, ctypes.c_int]
     user32.GetWindowTextLengthW.argtypes = [wintypes.HWND]
     user32.GetWindowThreadProcessId.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.DWORD)]
+    user32.GetForegroundWindow.restype = wintypes.HWND
+    user32.GetDesktopWindow.restype = wintypes.HWND
+    user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM]
     ENUMPROC = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
 
     class MEMORYSTATUSEX(ctypes.Structure):
@@ -96,8 +112,18 @@ if IS_WIN:
             if kernel32.QueryFullProcessImageNameW(h, 0, buf, ctypes.byref(size)):
                 exe = os.path.basename(buf.value).lower()
             kernel32.CloseHandle(h)
+        if len(_pid_exe) > 500:
+            _pid_exe.clear()
         _pid_exe[pid] = exe
         return exe
+
+    def foreground_exe():
+        hwnd = user32.GetForegroundWindow()
+        if not hwnd:
+            return ""
+        pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        return _exe_of(pid.value)
 
     def spotify_titles():
         """Titoli delle finestre di Spotify.exe (None se Spotify non e' aperto)."""
@@ -140,11 +166,162 @@ if IS_WIN:
         m.dwLength = ctypes.sizeof(MEMORYSTATUSEX)
         kernel32.GlobalMemoryStatusEx(ctypes.byref(m))
         return int(m.dwMemoryLoad)
+
+    # ---- audio (Core Audio via COM, solo ctypes). Va usato sempre dallo stesso thread.
+    class GUID(ctypes.Structure):
+        _fields_ = [("Data1", wintypes.DWORD), ("Data2", wintypes.WORD),
+                    ("Data3", wintypes.WORD), ("Data4", ctypes.c_ubyte * 8)]
+
+    ole32.CLSIDFromString.argtypes = [ctypes.c_wchar_p, ctypes.POINTER(GUID)]
+    ole32.CoCreateInstance.argtypes = [ctypes.POINTER(GUID), ctypes.c_void_p, wintypes.DWORD,
+                                       ctypes.POINTER(GUID), ctypes.POINTER(ctypes.c_void_p)]
+    ole32.CoCreateInstance.restype = ctypes.c_long
+    ole32.CoInitializeEx.argtypes = [ctypes.c_void_p, wintypes.DWORD]
+
+    def _guid(s):
+        g = GUID()
+        ole32.CLSIDFromString("{" + s + "}", ctypes.byref(g))
+        return g
+
+    CLSID_ENUM = _guid("BCDE0395-E52F-467C-8E3D-C4579291692E")
+    IID_ENUM = _guid("A95664D2-9614-4F35-A746-DE8DB63617E6")
+    IID_EPV = _guid("5CDF2C82-841E-4546-9722-0CF74078229A")    # IAudioEndpointVolume
+    IID_ASM2 = _guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F")   # IAudioSessionManager2
+    IID_ASC2 = _guid("BFB7FF88-7239-4FC9-8FA2-07C950BE9C6D")   # IAudioSessionControl2
+    IID_SAV = _guid("87CE5498-68D6-44E5-9215-6DA47EF883D8")    # ISimpleAudioVolume
+    VP = ctypes.c_void_p
+
+    def com(p, idx, argtypes, *args):
+        """Chiama il metodo numero idx dell'interfaccia COM p (indirizzo intero)."""
+        vtbl = ctypes.cast(p, ctypes.POINTER(ctypes.POINTER(VP)))[0]
+        fn = ctypes.WINFUNCTYPE(ctypes.c_long, VP, *argtypes)(vtbl[idx])
+        return fn(p, *args)
+
+    def _release(p):
+        if p:
+            com(p, 2, [])
+
+    def _check(hr):
+        if hr < 0:
+            raise OSError("COM errore 0x%08X" % (hr & 0xFFFFFFFF))
+
+    def _default_device():
+        enum = VP()
+        _check(ole32.CoCreateInstance(ctypes.byref(CLSID_ENUM), None, 23, ctypes.byref(IID_ENUM), ctypes.byref(enum)))
+        dev = VP()
+        try:
+            _check(com(enum.value, 4, [ctypes.c_int, ctypes.c_int, ctypes.POINTER(VP)], 0, 1, ctypes.byref(dev)))
+        finally:
+            _release(enum.value)
+        return dev.value
+
+    def _activate(dev, iid):
+        out = VP()
+        _check(com(dev, 3, [ctypes.POINTER(GUID), wintypes.DWORD, VP, ctypes.POINTER(VP)],
+                   ctypes.byref(iid), 23, None, ctypes.byref(out)))
+        return out.value
+
+    def audio_init():
+        ole32.CoInitializeEx(None, 0)
+
+    def master_get():
+        dev = _default_device()
+        try:
+            epv = _activate(dev, IID_EPV)
+            try:
+                v = ctypes.c_float()
+                _check(com(epv, 9, [ctypes.POINTER(ctypes.c_float)], ctypes.byref(v)))
+                return int(round(v.value * 100))
+            finally:
+                _release(epv)
+        finally:
+            _release(dev)
+
+    def master_set(pct):
+        dev = _default_device()
+        try:
+            epv = _activate(dev, IID_EPV)
+            try:
+                _check(com(epv, 7, [ctypes.c_float, VP], ctypes.c_float(pct / 100.0), None))
+            finally:
+                _release(epv)
+        finally:
+            _release(dev)
+
+    def _sessions():
+        """[(exe, puntatore ISimpleAudioVolume)]: chi chiama rilascia i puntatori."""
+        out = []
+        dev = _default_device()
+        try:
+            mgr = _activate(dev, IID_ASM2)
+        finally:
+            _release(dev)
+        try:
+            senum = VP()
+            _check(com(mgr, 5, [ctypes.POINTER(VP)], ctypes.byref(senum)))
+            try:
+                cnt = ctypes.c_int()
+                _check(com(senum.value, 3, [ctypes.POINTER(ctypes.c_int)], ctypes.byref(cnt)))
+                for i in range(cnt.value):
+                    ctl = VP()
+                    if com(senum.value, 4, [ctypes.c_int, ctypes.POINTER(VP)], i, ctypes.byref(ctl)) < 0:
+                        continue
+                    try:
+                        c2, sav = VP(), VP()
+                        if com(ctl.value, 0, [ctypes.POINTER(GUID), ctypes.POINTER(VP)],
+                               ctypes.byref(IID_ASC2), ctypes.byref(c2)) < 0:
+                            continue
+                        pid = wintypes.DWORD()
+                        com(c2.value, 14, [ctypes.POINTER(wintypes.DWORD)], ctypes.byref(pid))
+                        _release(c2.value)
+                        if com(ctl.value, 0, [ctypes.POINTER(GUID), ctypes.POINTER(VP)],
+                               ctypes.byref(IID_SAV), ctypes.byref(sav)) >= 0:
+                            out.append((_exe_of(pid.value), sav.value))
+                    finally:
+                        _release(ctl.value)
+            finally:
+                _release(senum.value)
+        finally:
+            _release(mgr)
+        return out
+
+    def apps_get(exes):
+        """{exe: volume 0-100; assente se l'app non sta usando l'audio}."""
+        res = {}
+        sess = _sessions()
+        try:
+            for exe, sav in sess:
+                if exe in exes:
+                    v = ctypes.c_float()
+                    if com(sav, 4, [ctypes.POINTER(ctypes.c_float)], ctypes.byref(v)) >= 0:
+                        res[exe] = max(res.get(exe, 0), int(round(v.value * 100)))
+        finally:
+            for _, sav in sess:
+                _release(sav)
+        return res
+
+    def app_set(exe, pct):
+        sess = _sessions()
+        try:
+            for e, sav in sess:
+                if e == exe:
+                    com(sav, 3, [ctypes.c_float, VP], ctypes.c_float(pct / 100.0), None)
+        finally:
+            for _, sav in sess:
+                _release(sav)
+
+    def screensaver():
+        # WM_SYSCOMMAND / SC_SCREENSAVE: funziona se in Windows e' impostato uno screen saver
+        user32.PostMessageW(user32.GetDesktopWindow(), 0x0112, 0xF140, 0)
 else:
     _cpu_prev = [None]
+    _sim = {"master": 42}
 
     def spotify_titles():
         return None
+
+    def foreground_exe():
+        return os.environ.get("PANEL_DEMO_FG", "")
 
     def cpu_percent():
         try:
@@ -169,12 +346,30 @@ else:
         except Exception:
             return 0
 
+    def audio_init():
+        pass
+
+    def master_get():
+        return _sim["master"]
+
+    def master_set(pct):
+        _sim["master"] = pct
+
+    def apps_get(exes):
+        return dict((e, _sim.get(e, 50)) for e in exes)
+
+    def app_set(exe, pct):
+        _sim[exe] = pct
+
+    def screensaver():
+        log("[simulato] screen saver")
+
 
 # ---------------------------------------------------------------- tasti
 VK = {"ctrl": 0x11, "control": 0x11, "shift": 0x10, "alt": 0x12, "win": 0x5B, "enter": 0x0D, "esc": 0x1B,
       "escape": 0x1B, "space": 0x20, "tab": 0x09, "backspace": 0x08, "delete": 0x2E, "del": 0x2E,
       "up": 0x26, "down": 0x28, "left": 0x25, "right": 0x27, "home": 0x24, "end": 0x23,
-      "pageup": 0x21, "pagedown": 0x22, "printscreen": 0x2C, "insert": 0x2D,
+      "pageup": 0x21, "pagedown": 0x22, "printscreen": 0x2C, "insert": 0x2D, "backslash": 0xDC,
       "playpause": 0xB3, "next": 0xB0, "prev": 0xB1, "stop": 0xB2,
       "mute": 0xAD, "voldown": 0xAE, "volup": 0xAF}
 EXTENDED = {0xB0, 0xB1, 0xB2, 0xB3, 0xAD, 0xAE, 0xAF, 0x26, 0x28, 0x25, 0x27, 0x24, 0x23, 0x21, 0x22, 0x2E, 0x2D}
@@ -226,6 +421,8 @@ def run_action(a):
             subprocess.Popen(cmd, close_fds=True)
         else:
             log("[simulato] avvia", cmd)
+    elif t == "saver":
+        screensaver()
     elif t == "lock":
         if IS_WIN:
             subprocess.Popen(["rundll32.exe", "user32.dll,LockWorkStation"])
@@ -238,7 +435,10 @@ def run_action(a):
 # ---------------------------------------------------------------- stato (aggiornato ogni secondo)
 IDLE_TITLES = ("", "spotify", "spotify free", "spotify premium", "advertisement")
 STATE = {"spotify": {"running": False, "playing": False, "title": "", "artist": ""},
-         "stats": {"cpu": 0, "ram": 0}}
+         "stats": {"cpu": 0, "ram": 0}, "profile": "default", "fg": ""}
+VOLS = {}                 # id -> 0-100, oppure None se non disponibile
+PENDING = {}              # id -> valore da applicare (lo applica il thread audio)
+PLOCK = threading.Lock()
 
 
 def read_spotify():
@@ -256,19 +456,78 @@ def read_spotify():
     return {"running": True, "playing": False, "title": "", "artist": ""}
 
 
+def pick_profile(cfg, fg):
+    for p in cfg["pages"]:
+        if fg and fg in [m.lower() for m in p.get("match", [])]:
+            return p.get("id", "default")
+    return "default"
+
+
 def sampler():
     while True:
         try:
+            cfg = load_config()[0]
+            fg = foreground_exe()
             STATE["spotify"] = read_spotify()
             STATE["stats"] = {"cpu": cpu_percent(), "ram": ram_percent()}
+            STATE["fg"] = fg
+            STATE["profile"] = pick_profile(cfg, fg)
         except Exception as e:
             log("errore lettura stato:", e)
         time.sleep(1)
 
 
+def audio_worker():
+    """Unico thread che tocca l'audio di Windows: applica i comandi e rilegge i volumi."""
+    try:
+        audio_init()
+    except Exception as e:
+        log("audio non inizializzato:", e)
+    last = 0
+    while True:
+        try:
+            cfg = load_config()[0]
+            apps = dict((a["id"], a.get("exe", "").lower()) for a in cfg["volumeApps"])
+            with PLOCK:
+                items = list(PENDING.items())
+                PENDING.clear()
+            for target, val in items:
+                try:
+                    if target == "master":
+                        master_set(val)
+                    elif target in apps:
+                        app_set(apps[target], val)
+                    VOLS[target] = val
+                except Exception as e:
+                    log("errore volume %s: %s" % (target, e))
+            if time.time() - last >= 1:
+                last = time.time()
+                try:
+                    VOLS["master"] = master_get()
+                except Exception as e:
+                    VOLS["master"] = None
+                    log("lettura volume master:", e)
+                try:
+                    got = apps_get(set(apps.values()))
+                    for aid, exe in apps.items():
+                        VOLS[aid] = got.get(exe)
+                except Exception as e:
+                    for aid in apps:
+                        VOLS[aid] = None
+                    log("lettura volume app:", e)
+        except Exception as e:
+            log("errore audio:", e)
+        time.sleep(0.05)
+
+
 # ---------------------------------------------------------------- HTTP
 TYPES = {".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8",
          ".css": "text/css; charset=utf-8", ".png": "image/png", ".ico": "image/x-icon"}
+
+
+def public_button(b):
+    return {"id": b.get("id"), "label": b.get("label", ""), "icon": b.get("icon", ""),
+            "cat": b.get("cat", "sys"), "span": b.get("span", 1), "small": bool(b.get("small"))}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -299,13 +558,15 @@ class Handler(BaseHTTPRequestHandler):
                 return self._send(401, {"error": "token"})
             data, ver = load_config()
             if u.path == "/api/config":
-                s = data["settings"]
-                btns = [{"id": b.get("id"), "label": b.get("label", ""), "icon": b.get("icon", ""),
-                         "color": b.get("color", "")} for b in data["buttons"]]
-                return self._send(200, {"version": ver, "columns": s.get("columns", 4),
-                                        "columnsPortrait": s.get("columnsPortrait", 3), "buttons": btns})
+                return self._send(200, {
+                    "version": ver,
+                    "theme": data["settings"].get("theme", "windows"),
+                    "volumeApps": [{"id": a["id"], "label": a.get("label", a["id"])} for a in data["volumeApps"]],
+                    "desktop": [public_button(b) for b in data["desktop"]],
+                    "pages": [{"id": p.get("id"), "name": p.get("name", ""),
+                               "buttons": [public_button(b) for b in p.get("buttons", [])]} for p in data["pages"]]})
             if u.path == "/api/state":
-                return self._send(200, dict(STATE, version=ver))
+                return self._send(200, dict(STATE, version=ver, volume=dict(VOLS)))
             return self._send(404, {"error": "not found"})
         name = "index.html" if u.path == "/" else u.path.lstrip("/")
         full = os.path.realpath(os.path.join(WEB, name))
@@ -328,13 +589,21 @@ class Handler(BaseHTTPRequestHandler):
             if n < 0 or n > 4096:
                 return self._send(413, {"error": "richiesta troppo grande"})
             body = json.loads(self.rfile.read(n) or b"{}")
+            cfg = load_config()[0]
             if u.path == "/api/media":
                 run_action({"type": "media", "cmd": body.get("cmd")})
             elif u.path == "/api/press":
-                btn = next((b for b in load_config()[0]["buttons"] if b.get("id") == body.get("id")), None)
+                btn = next((b for b in all_buttons(cfg) if b.get("id") == body.get("id")), None)
                 if not btn:
                     return self._send(404, {"error": "pulsante sconosciuto"})
                 run_action(btn.get("action", {}))
+            elif u.path == "/api/volume":
+                target = body.get("target")
+                if target != "master" and target not in [a["id"] for a in cfg["volumeApps"]]:
+                    return self._send(404, {"error": "controllo sconosciuto"})
+                val = max(0, min(100, int(round(float(body.get("value", 0))))))
+                with PLOCK:
+                    PENDING[target] = val
             else:
                 return self._send(404, {"error": "not found"})
             self._send(200, {"ok": True})
@@ -358,6 +627,7 @@ def main():
     cfg = load_config()[0]
     port = int(os.environ.get("PANEL_PORT") or (sys.argv[1] if len(sys.argv) > 1 else cfg["settings"].get("port", 8080)))
     threading.Thread(target=sampler, daemon=True).start()
+    threading.Thread(target=audio_worker, daemon=True).start()
     try:
         srv = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     except OSError as e:

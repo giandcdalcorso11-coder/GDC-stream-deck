@@ -1,7 +1,7 @@
 # Documento di Sessione — GDC Stream Deck
 
-**Versione:** 3
-**Ultimo aggiornamento:** 2026-11-26 09:00
+**Versione:** 4
+**Ultimo aggiornamento:** 2026-11-26 19:10
 
 ## Vision
 
@@ -70,7 +70,59 @@ perché finora è stata provata solo in modalità simulata su Linux.
 **Note (cronologia dello step):**
 - [2026-11-25] Proposto all'utente, non ancora deciso.
 
+### Step 5 — Pagine dei programmi (Claude, DaVinci Resolve, Bambu Studio)
+
+**Stato:** in corso
+
+**Obiettivo:** pulsanti utili e verificati per ogni programma, con cambio pagina automatico.
+
+**Decisioni progettuali:** la pagina segue il programma in primo piano (`match` in `buttons.json`).
+
+**Criterio di completamento:** l'utente conferma che pagina e scorciatoie funzionano in ciascun programma.
+
+**Note (cronologia dello step):**
+- [2026-11-26] Pagine inserite con tasti provvisori; da verificare le scorciatoie reali e cosa usa l'utente di Claude (app, sito o Claude Code).
+
+### Step 6 — Icona nell'area di notifica
+
+**Stato:** da fare
+
+**Obiettivo:** il server gira senza finestra visibile, con un'icona vicino a Bluetooth/Ollama/Spotify e un menu (apri pannello, mostra indirizzo, esci).
+
+**Decisioni progettuali:** probabile `pystray` + `Pillow`, installati da `start.bat`.
+
+**Criterio di completamento:** icona visibile nell'area di notifica e funzionante sul PC dell'utente.
+
+**Note (cronologia dello step):**
+- [2026-11-26] Richiesto dall'utente, non ancora iniziato.
+
 ## Storico sessioni
+
+### [2026-11-26 19:10] Nuova interfaccia (stili, volume, pagine) portata nel codice vero
+
+**Riepilogo:** il layout deciso nel mockup (4 stili, slider/fader/manopole, volume per app, comandi desktop fissi, pagine che cambiano col programma in primo piano) e' stato inserito in server e pagina, provato in modalita' simulata su Linux ma non ancora su Windows e iPad veri.
+
+**Cosa e' stato fatto:**
+- Mockup in artifact aggiornato piu' volte con l'utente: disposizione orizzontale/verticale, pagina base (YouTube, Gestione attivita', Screen saver, Mostra desktop, Screenshot), CPU/RAM in scheda piccola, comandi desktop grandi e sempre visibili, schede pagina (Predefinito, Claude, DaVinci, Bambu Studio), manopole con gesto circolare.
+- Server: volume di sistema e per app (Core Audio via ctypes, thread dedicato), programma in primo piano e scelta automatica della pagina, azione `saver`, `/api/volume`, nuova struttura di `buttons.json`.
+- Pagina riscritta in ES5 e CSS senza `gap` nei flex (non supportato da Safari 12): stage 1024x768 / 768x1024 adattato alla finestra; tocco sull'orologio cambia stile, tocco su CPU/RAM la luminosita'.
+- Provato in simulazione (Playwright): cambio pagina automatico, gesto circolare sul volume (42% -> 75% arrivato al server), pressione pulsanti, quattro stili in entrambi gli orientamenti, nessun errore in console; sintassi ES5 verificata con acorn.
+
+**Decisioni prese:**
+- Contesto: servivano comandi desktop sempre visibili ma grandi.
+- Decisione: riga fissa sopra le schede pagina; i pulsanti di ogni pagina sotto.
+- Alternative scartate: comandi desktop piccoli nella striscia (richiesta di invertire poi annullata dall'utente).
+- Da rivedere se: i pulsanti di pagina risultano troppo bassi sull'iPad vero.
+- Decisione: nessuna app nativa, solo collegamento Home da Safari (Step 3).
+- Nota: tasti di Claude, DaVinci e Bambu sono provvisori; stile GDC Stuff rimandato; animazioni rimandate.
+
+**Limiti noti:** volume (sistema e per app) scritto senza poterlo provare su Windows; `pointer events` assenti su iOS 12, quindi nella pagina si usano gli eventi touch (provati solo con mouse simulato); l'icona nell'area di notifica del PC non e' ancora stata fatta.
+
+**File consegnati/modificati:** `server.py`, `buttons.json` (nuova struttura), `web/index.html`, `web/style.css`, `web/app.js`, `README.md`, `mockup/pannello.html`, `GDC-stream-deck.zip`, `documento-sessione-gdc-stream-deck.md`
+
+**Impatto su Vision/Pipeline:** aggiunti Step 5 (pagine Claude/DaVinci/Bambu) e Step 6 (icona nell'area di notifica); Step 2 e 3 aggiornati.
+
+---
 
 ### [2026-11-26 09:00] Prima prova su Windows riuscita
 
