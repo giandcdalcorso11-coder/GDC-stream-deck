@@ -1,7 +1,7 @@
 # Documento di Sessione — GDC Stream Deck
 
-**Versione:** 8
-**Ultimo aggiornamento:** 2026-11-27 20:10
+**Versione:** 9
+**Ultimo aggiornamento:** 2026-11-27 21:00
 
 ## Vision
 
@@ -110,6 +110,18 @@ perché finora è stata provata solo in modalità simulata su Linux.
 - [2026-11-27] Implementato e provato in locale; da provare con una vera pubblicazione dopo l'installazione di questa versione.
 
 ## Storico sessioni
+
+### [2026-11-27 21:00] Aggiornamento automatico confermato e ritocchi grafici
+
+**Riepilogo:** l'utente ha aggiornato il pannello alla versione 2 e ha chiesto di togliere i contorni nelle sessioni e il riquadro verde quando si preme un pulsante; fatto nella versione 3.
+
+**Cosa e' stato fatto:**
+- Controllo degli indirizzi usati dall'aggiornamento (`raw.githubusercontent.com` e `codeload.github.com` con il ramo `claude/intelligent-goodall-uozwj8`): rispondono correttamente; l'utente ha poi aggiornato (probabile causa: non era ancora stato installato lo zip con l'aggiornamento automatico).
+- Tolto il contorno della sessione attiva (ora sfondo piu' marcato) e il riquadro verde di conferma sui pulsanti (resta solo uno scossone in caso di errore).
+
+**File consegnati/modificati:** `web/style.css`, `VERSION` (3), `documento-sessione-gdc-stream-deck.md`
+
+---
 
 ### [2026-11-27 20:10] Nuovo layout portato nel codice (versione 2 del pannello)
 
