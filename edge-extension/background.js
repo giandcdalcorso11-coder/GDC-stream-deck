@@ -72,6 +72,16 @@ async function loop() {
   }
 }
 
+// dopo l'installazione o il riavvio le schede di claude.ai gia' aperte non hanno ancora la parte che legge la pagina: la si inserisce
+async function injectOpenTabs() {
+  try {
+    var tabs = await chrome.tabs.query({ url: 'https://claude.ai/*' });
+    for (var i = 0; i < tabs.length; i++) {
+      try { await chrome.scripting.executeScript({ target: { tabId: tabs[i].id }, files: ['content.js'] }); } catch (e) { /* scheda non raggiungibile */ }
+    }
+  } catch (e) {}
+}
+
 async function start() { await loadAll(); loop(); push(); }
 
 chrome.runtime.onMessage.addListener(function (m, sender, reply) {
@@ -86,6 +96,6 @@ chrome.tabs.onRemoved.addListener(function (id) { delete pages[id]; pushSoon(); 
 chrome.windows.onFocusChanged.addListener(pushSoon);
 chrome.alarms.create('tick', { periodInMinutes: 0.5 });
 chrome.alarms.onAlarm.addListener(function () { if (!loopRunning) { start(); } else { push(); } });
-chrome.runtime.onStartup.addListener(start);
-chrome.runtime.onInstalled.addListener(start);
+chrome.runtime.onStartup.addListener(function () { start(); injectOpenTabs(); });
+chrome.runtime.onInstalled.addListener(function () { start(); injectOpenTabs(); });
 start();
