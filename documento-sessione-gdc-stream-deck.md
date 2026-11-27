@@ -1,7 +1,7 @@
 # Documento di Sessione — GDC Stream Deck
 
-**Versione:** 5
-**Ultimo aggiornamento:** 2026-11-26 20:05
+**Versione:** 6
+**Ultimo aggiornamento:** 2026-11-27 17:30
 
 ## Vision
 
@@ -97,6 +97,33 @@ perché finora è stata provata solo in modalità simulata su Linux.
 - [2026-11-26] Richiesto dall'utente, non ancora iniziato.
 
 ## Storico sessioni
+
+### [2026-11-27 17:30] Estensione di Edge per limiti, contesto e sessioni di Claude
+
+**Riepilogo:** costruita l'estensione di Edge che manda al pannello limiti di utilizzo, contesto e sessioni di Claude Code aperte, con passaggio in primo piano dall'iPad; provata con pagine finte di claude.ai, non ancora sul sito vero.
+
+**Cosa e' stato fatto:**
+- Estensione MV3 (`edge-extension/`): schede di claude.ai, nome sessione, progetto (repository), contesto (%), limiti 5 ore e settimana (API interna del sito, poi lettura del testo come ripiego), popup con stato e diagnostica. Permessi tutti dichiarati nel manifest (una sola autorizzazione all'installazione).
+- Server: `/api/ext/state`, `/api/ext/poll` (richiesta lunga), `/api/claude/focus`; stato Claude dentro `/api/state`.
+- Pagina Claude sull'iPad: barre dei limiti con orari di azzeramento, righe per finestra di Edge con le sessioni e il loro contesto (arancione da 70%, rosso da 85%).
+
+**Bug: i comandi per l'estensione andavano persi**
+
+**Sintomo:** toccando una sessione la scheda non cambiava.
+**Causa:** una richiesta lunga rimasta appesa (client ormai chiuso) prendeva il comando dalla coda e non riusciva a consegnarlo.
+**Fix applicato:** i comandi restano in coda finche' l'estensione non li conferma (`ack`), con id e scadenza; verificato con Chromium e pagine finte: cambio scheda in meno di 1 s.
+
+**Decisioni prese:**
+- Contesto: l'utente usa Claude Code sul sito (Edge), quindi nessun log locale.
+- Decisione: estensione in modalita' sviluppatore; i limiti si leggono dall'API interna del sito (non documentata) con ripiego sul testo della pagina Utilizzo.
+- Alternative scartate: Edge con porta di debug (profilo separato).
+- Da rivedere se: il sito cambia API o testi (la diagnostica dell'estensione serve a correggere); contesto disponibile solo per le sessioni con scheda aperta e pannello laterale visibile.
+
+**Limiti noti:** non provata sul sito vero; l'endpoint dei limiti e le regole per nome sessione, progetto e contesto sono dedotti dagli screenshot; le chat normali non mostrano un contesto.
+
+**File consegnati/modificati:** `edge-extension/*`, `server.py`, `buttons.json`, `web/app.js`, `web/style.css`, `README.md`, `mockup/pannello.html`, `GDC-stream-deck.zip`, `documento-sessione-gdc-stream-deck.md`
+
+---
 
 ### [2026-11-26 20:05] Prime prove sull'iPad: cache, rotazione, Edge e pagina Claude
 

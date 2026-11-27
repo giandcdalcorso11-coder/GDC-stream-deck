@@ -27,16 +27,11 @@
       ]
     },
     {
-      "id": "claude", "name": "Claude", "match": ["msedge.exe"], "matchTitle": ["Claude"],
+      "id": "claude", "name": "Claude", "view": "claude", "match": ["msedge.exe"], "matchTitle": ["Claude"],
       "buttons": [
-        { "id": "cl-new",    "label": "Nuova chat",     "icon": "chat",   "cat": "work",   "action": { "type": "url", "url": "https://claude.ai/new" } },
-        { "id": "cl-code",   "label": "Claude Code",    "icon": "term",   "cat": "work",   "action": { "type": "run", "path": "wt.exe", "args": ["claude"] } },
-        { "id": "cl-search", "label": "Cerca",          "icon": "search", "cat": "sys",    "action": { "type": "hotkey", "keys": "ctrl+k" } },
-        { "id": "cl-proj",   "label": "Progetti",       "icon": "folder", "cat": "sys",    "action": { "type": "url", "url": "https://claude.ai/projects" } },
-        { "id": "cl-web",    "label": "Apri claude.ai", "icon": "globe",  "cat": "sys",    "action": { "type": "url", "url": "https://claude.ai" } },
-        { "id": "cl-dict",   "label": "Dettatura",      "icon": "mic",    "cat": "audio",  "action": { "type": "hotkey", "keys": "win+h" } },
-        { "id": "cl-shot",   "label": "Screenshot",     "icon": "shot",   "cat": "sys",    "action": { "type": "hotkey", "keys": "win+shift+s" } },
-        { "id": "cl-stop",   "label": "Interrompi",     "icon": "xx",     "cat": "danger", "action": { "type": "hotkey", "keys": "esc" } }
+        { "id": "cl-new",   "label": "Nuova",     "icon": "chat",  "cat": "work",  "action": { "type": "url", "url": "https://claude.ai/code" } },
+        { "id": "cl-usage", "label": "Utilizzo",  "icon": "globe", "cat": "sys",   "action": { "type": "url", "url": "https://claude.ai/settings/usage" } },
+        { "id": "cl-dict",  "label": "Dettatura", "icon": "mic",   "cat": "audio", "action": { "type": "hotkey", "keys": "win+h" } }
       ]
     },
     {

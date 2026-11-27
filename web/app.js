@@ -170,6 +170,82 @@
     return k;
   }
 
+
+  /* ---- pagina Claude: limiti di utilizzo e sessioni aperte (dati dall'estensione di Edge) ---- */
+  var cvSig = '', DAYS_SHORT = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'];
+  function hhmm(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function resetText(l, weekly) {
+    if (!l) { return ''; }
+    var d = l.resetsAt ? new Date(l.resetsAt) : null;
+    if (!d || isNaN(d.getTime())) { return l.label ? 'si azzera ' + l.label : ''; }
+    if (weekly) { return 'si azzera ' + DAYS_SHORT[d.getDay()] + ' ' + hhmm(d); }
+    var mins = Math.max(0, Math.round((d.getTime() - now()) / 60000));
+    return 'si azzera alle ' + hhmm(d) + ' (tra ' + (mins >= 60 ? Math.floor(mins / 60) + ' h ' : '') + (mins % 60) + ' min)';
+  }
+  function usageBar(title, l, weekly) {
+    var d = el('div', 'ub' + (l && l.pct >= 85 ? ' warn' : ''));
+    var t = el('div', 't'); t.appendChild(el('span', '', '')); t.firstChild.appendChild(document.createTextNode(title));
+    t.appendChild(el('b', '', l ? Math.round(l.pct) + '%' : '&mdash;'));
+    var bar = el('div', 'bar', '<i style="width:' + (l ? Math.min(100, l.pct) : 0) + '%"></i>');
+    var sm = el('small'); sm.appendChild(document.createTextNode(l ? resetText(l, weekly) : 'non disponibile'));
+    d.appendChild(t); d.appendChild(bar); d.appendChild(sm);
+    return d;
+  }
+  function claudeShell(cur) {
+    var cv = el('div', 'cv'), u = el('div', 'panel'), ss = el('div', 'panel');
+    u.id = 'cvu'; ss.id = 'cvs';
+    var bb = el('div', 'cvb');
+    cur.buttons.forEach(function (b) {
+      var k = el('button', 'tb', ic(b.icon)); k.appendChild(document.createTextNode('\u00a0'));
+      var s2 = el('span'); setText(s2, b.label); k.appendChild(s2);
+      k.addEventListener('click', function () { api('POST', '/api/press', { id: b.id }); });
+      bb.appendChild(k);
+    });
+    u.appendChild(el('h4', '', 'Utilizzo')); u.appendChild(el('div', '', '')); u.appendChild(bb);
+    ss.appendChild(el('h4', '', 'Sessioni aperte (una riga per finestra di Edge)')); ss.appendChild(el('div', '', ''));
+    cv.appendChild(u); cv.appendChild(ss);
+    cvSig = '';
+    return cv;
+  }
+  function renderClaude(cl) {
+    var u = $('cvu'), ss = $('cvs');
+    if (!u || !ss || !cl) { return; }
+    var sig = JSON.stringify([cl.tabs, cl.usage, cl.age === null || cl.age > 25]) + Math.floor(now() / 60000);
+    if (sig === cvSig) { return; }
+    cvSig = sig;
+    var ub = u.childNodes[1], sb = ss.childNodes[1];
+    ub.innerHTML = ''; sb.innerHTML = '';
+    var offline = cl.age === null || cl.age > 25;
+    if (offline) {
+      ub.appendChild(el('div', 'cvmsg', 'Estensione di Edge non collegata'));
+      sb.appendChild(el('div', 'cvmsg', 'Apri Edge con l\u2019estensione installata (vedi edge-extension/LEGGIMI.txt).'));
+      return;
+    }
+    if (cl.usage && (cl.usage.fiveHour || cl.usage.week)) {
+      ub.appendChild(usageBar('Limite di 5 ore', cl.usage.fiveHour, false));
+      ub.appendChild(usageBar('Settimanale', cl.usage.week, true));
+    } else {
+      ub.appendChild(el('div', 'cvmsg', 'Limiti non disponibili' + (cl.usage && cl.usage.error ? ': ' + cl.usage.error : ' (in lettura...)')));
+    }
+    var wins = {}, order = [];
+    (cl.tabs || []).forEach(function (t) { if (!wins[t.windowId]) { wins[t.windowId] = []; order.push(t.windowId); } wins[t.windowId].push(t); });
+    if (!order.length) { sb.appendChild(el('div', 'cvmsg', 'Nessuna sessione di Claude aperta in Edge')); return; }
+    order.forEach(function (w, wi) {
+      var tabs = wins[w], counts = {}, best = '', bc = 0;
+      tabs.forEach(function (t) { if (t.project) { counts[t.project] = (counts[t.project] || 0) + 1; if (counts[t.project] > bc) { bc = counts[t.project]; best = t.project; } } });
+      var row = el('div', 'sr'), pn = el('div', 'pn'), chs = el('div', 'chs');
+      pn.appendChild(document.createTextNode(best || 'Finestra ' + (wi + 1))); row.appendChild(pn);
+      tabs.forEach(function (t) {
+        var c = el('button', 'ch' + (t.active ? ' on' : ''));
+        c.appendChild(document.createTextNode(t.name || (t.title && t.title !== 'Claude Code' ? t.title : (t.kind === 'chat' ? 'Chat' : 'Sessione'))));
+        if (t.context !== null && t.context !== undefined) { c.appendChild(el('em', 'cx' + (t.context >= 85 ? ' hot' : t.context >= 70 ? ' warn' : ''), t.context + '%')); }
+        c.addEventListener('click', function () { api('POST', '/api/claude/focus', { tabId: t.id, windowId: t.windowId }); });
+        chs.appendChild(c);
+      });
+      row.appendChild(chs); sb.appendChild(row);
+    });
+  }
+
   function buildPage() {
     var tabs = $('tabs'), deck = $('deck'), i, cur = null;
     if (!tabs || !cfg) { return; }
@@ -181,7 +257,10 @@
       t.addEventListener('click', function () { page = p.id; buildPage(); });
       tabs.appendChild(t);
     });
-    if (cur) {
+    if (cur && cur.view === 'claude') {
+      deck.appendChild(claudeShell(cur));
+      if (lastState) { renderClaude(lastState.claude); }
+    } else if (cur) {
       cur.buttons.forEach(function (b) {
         var k = keyButton(b, ''), sp = b.span || 1;
         if (sp > 1) { k.style.gridColumn = 'span ' + sp; }
@@ -279,7 +358,7 @@
         lastState = s;
         if (s.version !== cfgVersion) { loadConfig(); }
         else {
-          render(s); applyVolumes(s.volume || {});
+          render(s); applyVolumes(s.volume || {}); renderClaude(s.claude);
           if (cfg && s.profile !== autoProfile) {
             autoProfile = s.profile;
             if (pageExists(s.profile) && s.profile !== page) { page = s.profile; buildPage(); }

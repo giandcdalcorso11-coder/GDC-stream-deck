@@ -444,6 +444,11 @@ IDLE_TITLES = ("", "spotify", "spotify free", "spotify premium", "advertisement"
 STATE = {"spotify": {"running": False, "playing": False, "title": "", "artist": ""},
          "stats": {"cpu": 0, "ram": 0}, "profile": "default", "fg": ""}
 VOLS = {}                 # id -> 0-100, oppure None se non disponibile
+CLAUDE = {"ts": 0, "tabs": [], "usage": None}   # inviato dall'estensione di Edge
+CMDS = []                 # comandi per l'estensione (es. porta in primo piano una scheda), con id progressivo
+CCOND = threading.Condition()
+CMD_SEQ = [0]
+EPOCH = str(int(time.time()))   # cambia a ogni avvio del server: l'estensione riparte da zero
 PENDING = {}              # id -> valore da applicare (lo applica il thread audio)
 PLOCK = threading.Lock()
 
@@ -540,6 +545,36 @@ TYPES = {".html": "text/html; charset=utf-8", ".js": "application/javascript; ch
          ".css": "text/css; charset=utf-8", ".png": "image/png", ".ico": "image/x-icon"}
 
 
+def _s(v, n=120):
+    return str(v if v is not None else "")[:n]
+
+
+def clean_claude(body):
+    """Dati ricevuti dal browser: non sono fidati, si tengono solo tipi semplici e lunghezze limitate."""
+    tabs = []
+    for t in (body.get("tabs") or [])[:60]:
+        if not isinstance(t, dict):
+            continue
+        ctx = t.get("context")
+        tabs.append({"id": int(t.get("id", 0)), "windowId": int(t.get("windowId", 0)),
+                     "kind": _s(t.get("kind"), 12), "name": _s(t.get("name")), "project": _s(t.get("project"), 60),
+                     "title": _s(t.get("title")), "current": bool(t.get("current")), "active": bool(t.get("active")),
+                     "context": int(ctx) if isinstance(ctx, (int, float)) else None})
+    u = body.get("usage")
+    usage = None
+    if isinstance(u, dict):
+        def lim(x):
+            if not isinstance(x, dict):
+                return None
+            try:
+                return {"pct": round(float(x.get("pct")), 1), "resetsAt": _s(x.get("resetsAt"), 40), "label": _s(x.get("label"), 40)}
+            except (TypeError, ValueError):
+                return None
+        usage = {"fiveHour": lim(u.get("fiveHour")), "week": lim(u.get("week")),
+                 "error": _s(u.get("error"), 160), "source": _s(u.get("source"), 12)}
+    return {"ts": time.time(), "tabs": tabs, "usage": usage}
+
+
 def public_button(b):
     return {"id": b.get("id"), "label": b.get("label", ""), "icon": b.get("icon", ""),
             "cat": b.get("cat", "sys"), "span": b.get("span", 1), "small": bool(b.get("small"))}
@@ -578,10 +613,28 @@ class Handler(BaseHTTPRequestHandler):
                     "theme": data["settings"].get("theme", "windows"),
                     "volumeApps": [{"id": a["id"], "label": a.get("label", a["id"])} for a in data["volumeApps"]],
                     "desktop": [public_button(b) for b in data["desktop"]],
-                    "pages": [{"id": p.get("id"), "name": p.get("name", ""),
+                    "pages": [{"id": p.get("id"), "name": p.get("name", ""), "view": p.get("view", ""),
                                "buttons": [public_button(b) for b in p.get("buttons", [])]} for p in data["pages"]]})
             if u.path == "/api/state":
-                return self._send(200, dict(STATE, version=ver, volume=dict(VOLS)))
+                cl = dict(CLAUDE)
+                cl["age"] = round(time.time() - cl["ts"], 1) if cl["ts"] else None
+                return self._send(200, dict(STATE, version=ver, volume=dict(VOLS), claude=cl))
+            if u.path == "/api/ext/poll":
+                # richiesta "lunga": l'estensione resta in attesa fino a 20 s di un comando dall'iPad
+                # I comandi restano in coda finche' l'estensione non li conferma (ack = ultimo id eseguito):
+                # cosi' una richiesta rimasta appesa e ormai morta non li fa perdere.
+                try:
+                    ack = int(q.get("ack", ["0"])[0])
+                except ValueError:
+                    ack = 0
+                end = time.time() + 20
+                with CCOND:
+                    CMDS[:] = [c for c in CMDS if c["id"] > ack and time.time() - c["ts"] < 15]
+                    while not CMDS and time.time() < end:
+                        CCOND.wait(timeout=max(0.1, end - time.time()))
+                        CMDS[:] = [c for c in CMDS if c["id"] > ack and time.time() - c["ts"] < 15]
+                    cmds = [dict(c) for c in CMDS]
+                return self._send(200, {"epoch": EPOCH, "commands": cmds})
             return self._send(404, {"error": "not found"})
         name = "index.html" if u.path == "/" else u.path.lstrip("/")
         full = os.path.realpath(os.path.join(WEB, name))
@@ -610,7 +663,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(415, {"error": "serve application/json"})
         try:
             n = int(self.headers.get("Content-Length", 0))
-            if n < 0 or n > 4096:
+            if n < 0 or n > (65536 if u.path == "/api/ext/state" else 4096):
                 return self._send(413, {"error": "richiesta troppo grande"})
             body = json.loads(self.rfile.read(n) or b"{}")
             cfg = load_config()[0]
@@ -621,6 +674,14 @@ class Handler(BaseHTTPRequestHandler):
                 if not btn:
                     return self._send(404, {"error": "pulsante sconosciuto"})
                 run_action(btn.get("action", {}))
+            elif u.path == "/api/ext/state":
+                CLAUDE.update(clean_claude(body))
+            elif u.path == "/api/claude/focus":
+                with CCOND:
+                    CMD_SEQ[0] += 1
+                    CMDS[:] = [{"id": CMD_SEQ[0], "ts": time.time(), "type": "focus",   # conta solo l'ultimo tocco
+                                "tabId": int(body.get("tabId")), "windowId": int(body.get("windowId"))}]
+                    CCOND.notify_all()
             elif u.path == "/api/volume":
                 target = body.get("target")
                 if target != "master" and target not in [a["id"] for a in cfg["volumeApps"]]:

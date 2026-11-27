@@ -29,6 +29,13 @@ Un piccolo server sul PC Windows la serve all'iPad via Wi-Fi.
 - **Pagine:** le schede cambiano pagina; la pagina cambia da sola in base al programma in primo piano
   (campo `match` di ogni pagina, es. `"resolve.exe"`).
 
+## Pagina Claude (estensione di Edge)
+La pagina Claude mostra i limiti di 5 ore e settimanali e, per ogni sessione di Claude Code aperta in Edge, il suo
+contesto (rosso da 85%, arancione da 70%: e' il momento di fare un compact). Toccando una sessione Edge la porta
+in primo piano. Serve l'estensione nella cartella `edge-extension` (istruzioni in `edge-extension/LEGGIMI.txt`):
+si installa una sola volta e le autorizzazioni non vengono piu' richieste. Se la porta del server non e' 8080 o hai
+messo un token, impostali dall'icona dell'estensione.
+
 ## Pulsanti personalizzabili
 Modifica `buttons.json` (si ricarica da solo). Ogni pulsante: `id` unico, `label` (`<br>` per andare a capo),
 `icon` (nome di un'icona in `web/index.html`), `cat` (`sys`, `audio`, `work`, `danger`: il colore dipende dallo stile),

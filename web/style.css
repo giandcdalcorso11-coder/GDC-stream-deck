@@ -151,3 +151,27 @@ svg.i { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-widt
 #dim { position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: #000; opacity: 0; pointer-events: none; z-index: 5; }
 #offline { display: none; position: fixed; left: 0; top: 0; right: 0; bottom: 0; background: rgba(0,0,0,.88); color: #cbd3e6; font-family: -apple-system,sans-serif; font-size: 24px; text-align: center; line-height: 1.5; align-items: center; justify-content: center; z-index: 9; }
 #offline.show { display: flex; }
+
+/* pagina Claude */
+.cv { grid-column: 1 / -1; grid-row: 1 / -1; display: grid; grid-gap: 12px; grid-template-columns: 310px 1fr; min-height: 0; }
+#stage.port .cv { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+.panel { background: var(--key); border-radius: var(--r); padding: 12px 16px; min-height: 0; overflow: hidden; }
+.panel h4 { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+.ub { margin-bottom: 9px; } .ub .t { display: flex; justify-content: space-between; font-size: 14px; } .ub .bar { height: 9px; margin-top: 5px; }
+.ub small { display: block; color: var(--muted); font-size: 11px; margin-top: 3px; text-transform: none; letter-spacing: 0; }
+.ub.warn .bar i { background: var(--danger); }
+.cvmsg { color: var(--muted); font-size: 13px; line-height: 1.4; text-transform: none; letter-spacing: 0; }
+.cvb { display: flex; margin-top: 4px; }
+.cvb .tb { width: auto; -webkit-flex: 1; flex: 1; height: 38px; font-size: 12px; padding: 0 6px; }
+.cvb .tb + .tb { margin-left: 8px; } .cvb .tb svg.i { width: 18px; height: 18px; display: inline-block; vertical-align: middle; }
+.sr { display: flex; align-items: center; margin-bottom: 7px; min-height: 30px; }
+.sr .pn { width: 170px; -webkit-flex: none; flex: none; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sr .chs { -webkit-flex: 1; flex: 1; overflow: hidden; white-space: nowrap; }
+.ch { display: inline-block; padding: 6px 11px; margin-right: 6px; border-radius: calc(var(--r) - 2px); background: rgba(128,128,128,.22); color: var(--text); font-size: 12px; max-width: 230px; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+.ch.on { background: var(--accent); color: var(--onacc); font-weight: 600; }
+.ch .cx { font-style: normal; font-weight: 700; margin-left: 7px; padding: 1px 5px; border-radius: 8px; background: rgba(0,0,0,.25); }
+.ch .cx.warn { background: #f5a623; color: #000; } .ch .cx.hot { background: #e5484d; color: #fff; }
+.t-apple .panel { -webkit-backdrop-filter: blur(26px) saturate(180%); backdrop-filter: blur(26px) saturate(180%); border: 1px solid rgba(255,255,255,.35); box-shadow: inset 0 1.5px 0 rgba(255,255,255,.65), 0 10px 30px rgba(0,0,0,.3); }
+.t-neon .panel { border: 1px solid rgba(0,240,255,.45); box-shadow: 0 0 14px rgba(0,240,255,.12) inset; }
+.t-dj .panel { border: 1px solid #000; box-shadow: inset 0 1px 0 #4a4c53, 0 2px 0 #000; }
+.t-dj .ub .bar i { background: #2fe06a; } .t-dj .ub.warn .bar i { background: #ff3b30; } .t-dj .ch { text-transform: none; }

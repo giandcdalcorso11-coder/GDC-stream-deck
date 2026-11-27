@@ -76,7 +76,7 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .panel{background:var(--key);border-radius:var(--r);padding:12px 16px;min-height:0;overflow:hidden}
 .panel h4{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
 .ub{margin-bottom:9px}.ub .t{display:flex;justify-content:space-between;font-size:14px}.ub .bar{height:9px;margin-top:5px}.ub small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
-.ub.warn .bar i{background:var(--danger)}
+.ub.warn .bar i{background:var(--danger)}.ch .cx{font-style:normal;font-weight:700;margin-left:7px;padding:1px 5px;border-radius:8px;background:rgba(0,0,0,.25)}.ch .cx.warn{background:#f5a623;color:#000}.ch .cx.hot{background:#e5484d;color:#fff}
 .cvb{display:flex;margin-top:4px}.cvb .tb{width:auto;flex:1;height:38px;font-size:12px;padding:0 6px}.cvb .tb+.tb{margin-left:8px}
 .sr{display:flex;align-items:center;margin-bottom:7px;min-height:30px}
 .sr .pn{width:170px;flex:none;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -240,14 +240,14 @@ function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=c
 function ic(n){return '<svg class="i"><use href="#'+n+'"/></svg>'}
 
 function claudeView(){
- var SES=[{p:'GDC stream deck',d:1,t:['Pannello iPad: layout',"Revisione server"],on:0},{p:'Sito cliente',d:2,t:['Fix checkout','Test e2e','Refactor carrello'],on:1},{p:'Newsletter',d:3,t:['Bozza novembre'],on:0}];
+ var SES=[{p:'GDC-stream-deck',t:[['GDC stream deck',33],['Revisione server',78]],on:0},{p:'CNC 2D',t:[['Macchina',54],['Preparazione stampe',91],['Serie instagram',12]],on:1},{p:'Da Vinci plugin',t:[['Modelli video IA',27]],on:0}];
  var cv=el('div','cv');
  var u=el('div','panel','<h4>Utilizzo</h4>'+
-  '<div class="ub"><div class="t"><span>Sessione 5 ore</span><b>62%</b></div><div class="bar"><i style="width:62%"></i></div><small>si azzera tra 2 h 10 min</small></div>'+
-  '<div class="ub warn"><div class="t"><span>Settimana</span><b>88%</b></div><div class="bar"><i style="width:88%"></i></div><small>si azzera gio 09:00</small></div>');
+  '<div class="ub"><div class="t"><span>Limite di 5 ore</span><b>68%</b></div><div class="bar"><i style="width:68%"></i></div><small>si azzera alle 18:50 (tra 1 h 12 min)</small></div>'+
+  '<div class="ub warn"><div class="t"><span>Settimanale</span><b>84%</b></div><div class="bar"><i style="width:84%"></i></div><small>si azzera sab 02:00</small></div>');
  var bb=el('div','cvb');bb.appendChild(el('button','tb',ic('chat')+'&nbsp;Nuova'));bb.appendChild(el('button','tb',ic('globe')+'&nbsp;Utilizzo'));u.appendChild(bb);
  var ss=el('div','panel','<h4>Sessioni aperte (una riga per finestra di Edge)</h4>');
- SES.forEach(function(r){var row=el('div','sr','<div class="pn">'+r.p+'</div><div class="dn">Desktop '+r.d+'</div>');var c=el('div','chs');r.t.forEach(function(t,i){c.appendChild(el('span','ch'+(i==r.on?' on':''),t))});row.appendChild(c);ss.appendChild(row)});
+ SES.forEach(function(r){var row=el('div','sr','<div class="pn">'+r.p+'</div>');var c=el('div','chs');r.t.forEach(function(t,i){c.appendChild(el('span','ch'+(i==r.on?' on':''),t[0]+'<em class="cx'+(t[1]>=85?' hot':t[1]>=70?' warn':'')+'">'+t[1]+'%</em>'))});row.appendChild(c);ss.appendChild(row)});
  cv.appendChild(u);cv.appendChild(ss);return cv}
 function build(){
  var st=document.getElementById('stage');st.className='t-'+theme+' '+orient;

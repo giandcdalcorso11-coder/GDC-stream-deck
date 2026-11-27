@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8"><title>Pannello GDC</title>
+<style>
+body{font:13px system-ui,sans-serif;width:340px;margin:0;padding:12px;color:#222}
+h3{margin:0 0 8px;font-size:15px}.row{margin:6px 0}.ok{color:#0a7d33}.ko{color:#c0392b}
+input{width:80px;padding:3px}button{padding:5px 9px;margin-right:6px}
+textarea{width:100%;height:120px;font:11px monospace;margin-top:6px}small{color:#666}
+</style></head><body>
+<h3>Pannello GDC</h3>
+<div class="row" id="st">...</div>
+<div class="row" id="us"></div>
+<div class="row">Porta <input id="port" type="number"> Parola <input id="tok" type="text" placeholder="(token)" style="width:110px"> <button id="save">Salva</button></div>
+<div class="row"><button id="diag">Diagnostica scheda attuale</button></div>
+<textarea id="out" readonly placeholder="La diagnostica compare qui: copiala e mandala a Claude se qualcosa non si legge bene."></textarea>
+<script src="popup.js"></script></body></html>

@@ -1,0 +1,15 @@
+ESTENSIONE EDGE PER IL PANNELLO GDC
+
+Installazione (una volta sola)
+1. Metti questa cartella (edge-extension) in un posto fisso, per esempio C:\GDC-stream-deck\edge-extension.
+   Non spostarla e non cancellarla dopo l'installazione.
+2. In Edge apri  edge://extensions  e attiva "Modalita' sviluppatore" (interruttore in basso a sinistra).
+3. Clicca "Carica estensione decompressa" e scegli la cartella edge-extension.
+4. Fissa l'icona dell'estensione sulla barra (puzzle -> occhio/pin) per aprirne lo stato.
+
+Non serve altro: le autorizzazioni (schede, claude.ai, localhost) sono tutte dichiarate nell'estensione e
+vengono accettate una volta sola all'installazione. Dopo, anche riavviando PC ed Edge, resta attiva.
+Edge puo' ricordarti ogni tanto che hai un'estensione in modalita' sviluppatore: si puo' ignorare.
+
+Se qualcosa non si legge bene (nome sessione, progetto, contesto, limiti), apri una scheda di claude.ai,
+clicca l'icona dell'estensione -> "Diagnostica scheda attuale" e mandami il testo che compare.
