@@ -130,6 +130,42 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 #stage.port #art{width:56px;height:56px}#stage.port #song{font-size:18px}#stage.port #artist{font-size:13px}
 #stage.port .tb{width:44px;height:38px}#stage.port .tb.big{width:60px}#stage.port .card{padding:10px 14px}
 #stage.port.t-dj #master{flex-basis:250px}
+
+/* ===== disposizione orizzontale: colonna sinistra sempre visibile + colonna destra con le pagine ===== */
+#left,#right,#toprow{display:contents}
+#stage.land{grid-template-columns:400px 1fr;grid-template-rows:1fr;grid-template-areas:"left right"}
+#stage.land #left{display:flex;flex-direction:column;grid-area:left;min-height:0}
+#stage.land #right{display:flex;flex-direction:column;grid-area:right;min-height:0}
+#stage.land #toprow{display:flex;height:108px;flex:none}
+#stage.land #c1{flex:1.35}#stage.land #sys{flex:1;margin-left:12px}
+#stage.land #clock{font-size:42px}#stage.land.t-dj #clock{font-size:36px}#stage.land #date{font-size:14px}
+#stage.land #c2{height:128px;margin-top:12px;flex:none}
+#stage.land #art{width:56px;height:56px}#stage.land #song{font-size:18px}#stage.land #artist{font-size:13px}
+#stage.land .tb{width:46px;height:36px}#stage.land .tb.big{width:64px}#stage.land #tr{margin-top:8px}
+#stage.land #vol{flex:1;margin-top:12px;flex-direction:column;align-items:stretch;justify-content:space-evenly;padding:10px 14px;min-height:0}
+#stage.land #master{width:100%;flex:none}#stage.land.t-dj #master{flex:none;width:100%}
+#stage.land #apps{width:100%;border-left:0;padding-left:0;margin-top:4px}
+#stage.land .app{width:auto;flex:1}
+#stage.land #deskrow{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:1fr 1fr;grid-gap:8px;height:176px;margin-top:12px;flex:none}
+#stage.land #strip{height:40px;flex:none}
+#stage.land #deck{flex:1;margin-top:12px;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(4,1fr)}
+/* pagina Claude: limiti a manopola (non usabili) + sessioni a righe grandi */
+.cv{display:flex;flex-direction:column;grid-template-columns:none;grid-column:1/-1;grid-row:1/-1;min-height:0}
+#stage.port .cv{grid-template-rows:none}
+.cv .panel+.panel,.cv .panel+.cvb{margin-top:12px}
+.cvl{display:flex;justify-content:space-around}.dl{text-align:center}.dl svg{display:block;margin:0 auto}
+.dl .tt{font-size:14px;font-weight:600;margin-top:2px}.dl small{display:block;color:var(--muted);font-size:11px;margin-top:2px;text-transform:none;letter-spacing:0}
+.cvs{flex:1}.gh{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2px 2px 6px}
+.sx{display:flex;align-items:center;padding:7px 12px;border-radius:calc(var(--r) - 2px);background:rgba(128,128,128,.16);margin-bottom:6px;min-height:50px;cursor:pointer}
+.sx.on{outline:2px solid var(--accent);outline-offset:-2px}
+.sx .nm{flex:1;font-size:16px;font-weight:600;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:10px;text-transform:none;letter-spacing:0}
+.sx .cx2{margin-left:10px;flex:none}
+.st{width:36px;height:36px;border-radius:50%;border:2px solid rgba(128,128,128,.55);display:flex;align-items:center;justify-content:center;flex:none}
+.st.working{border-color:var(--accent)}.st.done{background:#2fb344;border-color:#2fb344;color:#fff}.st.done svg.i{width:20px;height:20px;stroke-width:2.6}
+.st i{display:block;width:5px;height:5px;border-radius:50%;background:var(--text);margin:0 1.5px;animation:bnc 1s infinite}
+.st i:nth-child(2){animation-delay:.15s}.st i:nth-child(3){animation-delay:.3s}
+@keyframes bnc{0%,70%,100%{transform:translateY(0)}35%{transform:translateY(-6px)}}
+.t-dj .sx{background:linear-gradient(#26272b,#18191b);border:1px solid #000}
 </style></head><body>
 <div id="top"><div class="g" id="sty"><span>Stile</span></div><div class="g" id="ori"><span>iPad</span></div>
 <div id="note">Le pagine cambiano da sole in base al programma in primo piano; qui puoi toccare le schede per vederle. I tasti di Claude, DaVinci e Bambu sono provvisori, da verificare insieme.</div></div>
@@ -149,6 +185,7 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 <symbol id="mute" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zM17 9l5 6M22 9l-5 6"/></symbol>
 <symbol id="note" viewBox="0 0 24 24"><path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></symbol>
 <symbol id="saver" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4M14.5 7.5a3 3 0 1 1-3.5-1.5 2.4 2.4 0 0 0 3.5 1.5z"/></symbol>
+<symbol id="chk" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
 <symbol id="left" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
 <symbol id="right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
 <symbol id="overview" viewBox="0 0 24 24"><rect x="3" y="4" width="8" height="7" rx="1"/><rect x="13" y="4" width="8" height="7" rx="1"/><rect x="3" y="13" width="8" height="7" rx="1"/><rect x="13" y="13" width="8" height="7" rx="1"/></symbol>
@@ -197,7 +234,7 @@ function ctl(id,size){
  var name=apps.filter(function(a){return a[0]==id})[0][1];
  function setLabel(){label.innerHTML='<span>'+name+'</span><b>'+Math.round(vals[id])+'%</b>';}
  if(kind=='fader'){
-  var H=size=='lg'?130:104,CH=size=='lg'?28:22,fd=document.createElement('div');fd.className='fd '+size;
+  var L=orient=='land',H=size=='lg'?130:(L?90:104),CH=size=='lg'?28:22,fd=document.createElement('div');fd.className='fd '+size;
   fd.innerHTML='<div class="scale"></div><div class="slot"></div><div class="cap"></div>';
   var cap=fd.querySelector('.cap'),vu=null;
   function drawF(){cap.style.top=(8+(100-vals[id])/100*(H-16)-CH/2)+'px';setLabel();if(vu){var n=Math.round(vals[id]/100*12);for(var i=0;i<12;i++){vu.children[i].className=(i<n?'on ':'')+(i<7?'g':i<10?'o':'r')}}}
@@ -217,7 +254,7 @@ function ctl(id,size){
   s.addEventListener('pointerup',function(){s.onpointermove=null});
   box.appendChild(s);box.appendChild(label);draw();return box;
  }
- var D=size=='lg'?140:92,R=D/2-(size=='lg'?12:8),sw=size=='lg'?11:8,c=D/2;
+ var D=size=='lg'?(orient=='land'?150:140):(orient=='land'?72:92),R=D/2-(size=='lg'?12:8),sw=size=='lg'?11:8,c=D/2;
  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 '+D+' '+D);svg.setAttribute('width',D);svg.setAttribute('height',D);svg.setAttribute('class','kn');
  function pt(a,r){a=a*Math.PI/180;return [c+r*Math.cos(a),c+r*Math.sin(a)]}
  function arc(v,r){var a0=135,a1=135+270*v,p0=pt(a0,r),p1=pt(a1,r);return 'M'+p0+' A'+r+' '+r+' 0 '+((a1-a0)>180?1:0)+' 1 '+p1}
@@ -239,16 +276,20 @@ function ctl(id,size){
 function el(tag,cls,html){var e=document.createElement(tag);if(cls)e.className=cls;if(html)e.innerHTML=html;return e}
 function ic(n){return '<svg class="i"><use href="#'+n+'"/></svg>'}
 
+function dial(pct,D,sw,col,txt,fs){var c=D/2,R=c-sw/2-1;function pt(a){a=a*Math.PI/180;return [c+R*Math.cos(a),c+R*Math.sin(a)]}
+ function arc(v){var a1=135+270*v,p0=pt(135),p1=pt(a1);return 'M'+p0+' A'+R+' '+R+' 0 '+((a1-135)>180?1:0)+' 1 '+p1}
+ return '<svg width="'+D+'" height="'+D+'" viewBox="0 0 '+D+' '+D+'"><path d="'+arc(1)+'" fill="none" stroke="rgba(128,128,128,.3)" stroke-width="'+sw+'" stroke-linecap="round"/><path d="'+arc(Math.max(pct/100,.004))+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linecap="round"/><text x="'+c+'" y="'+(c+fs*.35)+'" text-anchor="middle" font-size="'+fs+'" font-weight="700" fill="currentColor" style="font-family:inherit">'+txt+'</text></svg>'}
+function stIcon(s){return '<span class="st '+s+'">'+(s=='working'?'<i></i><i></i><i></i>':s=='done'?'<svg class="i"><use href="#chk"/></svg>':'')+'</span>'}
+var SESS=[{p:'CNC 2D',t:[{n:'Macchina: fresatura lato B con la nuova fresa',c:54,s:'working',on:1},{n:'Preparazione stampe',c:91,s:'done'}]},{p:'GDC-stream-deck',t:[{n:'Pannello iPad: layout',c:33,s:'idle'},{n:'Revisione server',c:78,s:'idle'}]},{p:'Da Vinci plugin',t:[{n:'Modelli video IA',c:27,s:'done'}]}];
 function claudeView(){
- var SES=[{p:'GDC-stream-deck',t:[['GDC stream deck',33],['Revisione server',78]],on:0},{p:'CNC 2D',t:[['Macchina',54],['Preparazione stampe',91],['Serie instagram',12]],on:1},{p:'Da Vinci plugin',t:[['Modelli video IA',27]],on:0}];
- var cv=el('div','cv');
- var u=el('div','panel','<h4>Utilizzo</h4>'+
-  '<div class="ub"><div class="t"><span>Limite di 5 ore</span><b>68%</b></div><div class="bar"><i style="width:68%"></i></div><small>si azzera alle 18:50 (tra 1 h 12 min)</small></div>'+
-  '<div class="ub warn"><div class="t"><span>Settimanale</span><b>84%</b></div><div class="bar"><i style="width:84%"></i></div><small>si azzera sab 02:00</small></div>');
- var bb=el('div','cvb');bb.appendChild(el('button','tb',ic('chat')+'&nbsp;Nuova'));bb.appendChild(el('button','tb',ic('globe')+'&nbsp;Utilizzo'));u.appendChild(bb);
- var ss=el('div','panel','<h4>Sessioni aperte (una riga per finestra di Edge)</h4>');
- SES.forEach(function(r){var row=el('div','sr','<div class="pn">'+r.p+'</div>');var c=el('div','chs');r.t.forEach(function(t,i){c.appendChild(el('span','ch'+(i==r.on?' on':''),t[0]+'<em class="cx'+(t[1]>=85?' hot':t[1]>=70?' warn':'')+'">'+t[1]+'%</em>'))});row.appendChild(c);ss.appendChild(row)});
- cv.appendChild(u);cv.appendChild(ss);return cv}
+ var big=orient=='land',cv=el('div','cv'),u=el('div','panel','<h4>Utilizzo</h4>'),row=el('div','cvl');
+ [['Limite di 5 ore',68,'si azzera alle 18:50 (tra 1 h 12 min)'],['Settimanale',84,'si azzera sab 02:00']].forEach(function(l){var d=el('div','dl');d.innerHTML=dial(l[1],big?98:80,big?10:8,l[1]>=85?'var(--danger)':'var(--accent)',l[1]+'%',big?23:19)+'<div class="tt">'+l[0]+'</div><small>'+l[2]+'</small>';row.appendChild(d)});
+ u.appendChild(row);
+ var ss=el('div','panel cvs','<h4>Sessioni aperte &nbsp;<span style="text-transform:none;letter-spacing:0">(nel mockup, tocca una riga per cambiare lo stato)</span></h4>'),list=el('div','lst');ss.appendChild(list);
+ function draw(){list.innerHTML='';SESS.forEach(function(g){list.appendChild(el('div','gh',g.p));g.t.forEach(function(t){var r=el('div','sx'+(t.on?' on':''),'<div class="nm">'+t.n+'</div>'+stIcon(t.s)+'<div class="cx2">'+dial(t.c,46,5,t.c>=85?'var(--danger)':t.c>=70?'#f5a623':'var(--accent)',t.c,13)+'</div>');r.onclick=function(){t.s={idle:'working',working:'done',done:'idle'}[t.s];draw()};list.appendChild(r)})})}
+ draw();
+ var bb=el('div','cvb');bb.appendChild(el('button','tb',ic('chat')+'&nbsp;Nuova'));bb.appendChild(el('button','tb',ic('globe')+'&nbsp;Utilizzo'));bb.appendChild(el('button','tb',ic('mic')+'&nbsp;Dettatura'));
+ cv.appendChild(u);cv.appendChild(ss);cv.appendChild(bb);return cv}
 function build(){
  var st=document.getElementById('stage');st.className='t-'+theme+' '+orient;
  st.innerHTML='';
@@ -267,7 +308,11 @@ function build(){
  var dk=el('section');dk.id='deck';
  if(PAGES[page].view){dk.appendChild(claudeView())}else PAGES[page].k.forEach(function(k){var b=el('button','key'+(k[4]?' '+k[4]:''),ic(k[0])+'<span>'+k[1]+'</span>');b.setAttribute('data-c',k[2]);var sp=Array.isArray(k[3])?k[3][orient=='land'?0:1]:k[3];if(sp>1){b.style.gridColumn='span '+sp}dk.appendChild(b)});
  var rw=PAGES[page].rows;if(rw){dk.style.gridTemplateRows='repeat('+rw[orient]+',1fr)'}
- [c1,sys,c2,vol,db,strip,dk].forEach(function(n){st.appendChild(n)});
+ var left=el('div');left.id='left';var top2=el('div');top2.id='toprow';top2.appendChild(c1);top2.appendChild(sys);
+ left.appendChild(top2);left.appendChild(c2);left.appendChild(vol);left.appendChild(db);
+ var right=el('div');right.id='right';right.appendChild(strip);right.appendChild(dk);
+ st.appendChild(left);st.appendChild(right);
+ if(orient=='land'){var SP=[2,2,2,3,3];Array.prototype.forEach.call(db.children,function(b,i){b.style.gridColumn='span '+SP[i]})}
  if(theme=='dj'){var w=document.createElementNS('http://www.w3.org/2000/svg','svg');w.setAttribute('class','wave');w.setAttribute('viewBox','0 0 500 60');w.setAttribute('preserveAspectRatio','none');var h='';for(var x=0;x<500;x+=4){var q=7+Math.abs(Math.sin(x/17)*Math.sin(x/53))*22;h+='<rect x="'+x+'" y="'+(30-q)+'" width="2" height="'+(q*2)+'" fill="'+(x<220?'#2f9bff':'#1c4f8a')+'"/>'}w.innerHTML=h;c2.appendChild(w)}
  var sty=document.getElementById('sty');sty.innerHTML='<span>Stile</span>';
  for(var t in THEMES){(function(t){var b=el('button',t==theme?'on':'',NAMES[t]+({knob:' · knob',slider:' · slider',fader:' · fader'}[THEMES[t]]));b.onclick=function(){theme=t;build()};sty.appendChild(b)})(t)}

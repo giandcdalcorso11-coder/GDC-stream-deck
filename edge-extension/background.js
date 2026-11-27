@@ -4,6 +4,7 @@ var settings = { port: 8080, token: '' };
 var pages = {};          // tabId -> info letta dalla pagina
 var usage = null;        // ultimo dato sui limiti
 var last = { ok: false, ts: 0, error: 'mai inviato' };
+var status = {};         // tabId -> 'idle' | 'working' | 'done'
 var loopRunning = false, pushTimer = null, lastCmd = 0, epoch = '';
 
 function base() { return 'http://localhost:' + settings.port; }
@@ -34,7 +35,12 @@ async function push() {
       var k = kindOf(t.url || '');
       if (k === 'other') { return; }
       var p = pages[t.id] || {};
-      out.push({ id: t.id, windowId: t.windowId, kind: k, active: !!t.active, current: !!t.active && t.windowId === focused,
+      var cur = !!t.active && t.windowId === focused, st = status[t.id] || 'idle';
+      if (p.working) { st = 'working'; }
+      else if (st === 'working') { st = cur ? 'idle' : 'done'; }   // ha finito: spunta finche' non la guardi
+      if (st === 'done' && cur) { st = 'idle'; }
+      status[t.id] = st;
+      out.push({ status: st, id: t.id, windowId: t.windowId, kind: k, active: !!t.active, current: !!t.active && t.windowId === focused,
         title: t.title || '', name: p.name || '', project: p.project || '', context: (p.context == null ? null : p.context) });
     });
     var r = await fetch(withToken('/api/ext/state'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tabs: out, usage: usage }) });
@@ -66,6 +72,7 @@ async function loop() {
     try {
       var r = await fetch(withToken('/api/ext/poll?ack=' + lastCmd));
       var j = await r.json();
+      if (j.extVersion && j.extVersion !== chrome.runtime.getManifest().version) { chrome.runtime.reload(); return; }
       if (j.epoch !== epoch) { epoch = j.epoch; lastCmd = 0; }   // server riavviato: gli id ripartono
       (j.commands || []).forEach(function (c) { if (c.id > lastCmd) { lastCmd = c.id; handle(c); } });
     } catch (e) { await sleep(3000); }
@@ -92,7 +99,7 @@ chrome.runtime.onMessage.addListener(function (m, sender, reply) {
 });
 chrome.tabs.onUpdated.addListener(pushSoon);
 chrome.tabs.onActivated.addListener(pushSoon);
-chrome.tabs.onRemoved.addListener(function (id) { delete pages[id]; pushSoon(); });
+chrome.tabs.onRemoved.addListener(function (id) { delete pages[id]; delete status[id]; pushSoon(); });
 chrome.windows.onFocusChanged.addListener(pushSoon);
 chrome.alarms.create('tick', { periodInMinutes: 0.5 });
 chrome.alarms.onAlarm.addListener(function () { if (!loopRunning) { start(); } else { push(); } });

@@ -3,7 +3,14 @@
 Pagina web pensata per **iPad Air 1 / iOS 12** (JavaScript ES5, nessuna funzione moderna).
 Un piccolo server sul PC Windows la serve all'iPad via Wi-Fi.
 
-## Installazione / aggiornamento
+## Aggiornamento automatico
+Dopo l'installazione di questa versione il pannello si aggiorna da solo: all'avvio e ogni 5 minuti il server controlla
+su GitHub (file `VERSION`), scarica i file nuovi, li sostituisce e si riavvia (`start.bat` lo rilancia da solo).
+Restano le tue impostazioni (porta, token, stile) e viene salvata una copia di `server.py` e `buttons.json` (`.bak`).
+L'estensione di Edge si ricarica da sola quando cambia la sua versione. Sull'iPad basta riaprire il pannello da Safari.
+Per disattivarlo metti `"autoUpdate": false` in `settings` di `buttons.json`.
+
+## Installazione / aggiornamento manuale
 1. Sul PC installa **Python 3** da python.org (spunta "Add python.exe to PATH").
 2. Copia questa cartella sul PC e fai doppio clic su `start.bat`.
    Per aggiornare: chiudi la finestra del server, sostituisci i file della cartella con quelli nuovi

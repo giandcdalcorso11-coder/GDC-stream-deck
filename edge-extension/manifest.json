@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Pannello GDC - Claude",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Invia al pannello GDC, in esecuzione sul tuo PC, le sessioni di Claude aperte e i limiti di utilizzo.",
   "permissions": ["tabs", "alarms", "storage", "scripting"],
   "host_permissions": ["https://claude.ai/*", "http://localhost/*", "http://127.0.0.1/*"],

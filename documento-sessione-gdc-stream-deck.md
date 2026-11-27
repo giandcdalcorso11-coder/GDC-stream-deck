@@ -1,7 +1,7 @@
 # Documento di Sessione — GDC Stream Deck
 
-**Versione:** 6
-**Ultimo aggiornamento:** 2026-11-27 17:30
+**Versione:** 7
+**Ultimo aggiornamento:** 2026-11-27 19:50
 
 ## Vision
 
@@ -96,7 +96,49 @@ perché finora è stata provata solo in modalità simulata su Linux.
 **Note (cronologia dello step):**
 - [2026-11-26] Richiesto dall'utente, non ancora iniziato.
 
+### Step 7 — Aggiornamento automatico
+
+**Stato:** in corso
+
+**Obiettivo:** ricevere le nuove versioni senza reinstallare a mano.
+
+**Decisioni progettuali:** controllo di `VERSION` su GitHub, installazione e riavvio automatici; l'estensione si ricarica da sola.
+
+**Criterio di completamento:** una nuova versione pubblicata sul branch arriva sul PC e sull'iPad senza interventi manuali.
+
+**Note (cronologia dello step):**
+- [2026-11-27] Implementato e provato in locale; da provare con una vera pubblicazione dopo l'installazione di questa versione.
+
 ## Storico sessioni
+
+### [2026-11-27 19:50] Aggiornamento automatico, stato delle sessioni e nuovo layout (mockup)
+
+**Riepilogo:** dopo le prove sull'iPad con dati veri e' stato aggiunto l'aggiornamento automatico (server ed estensione), l'estensione legge lo stato di risposta di ogni sessione, ed e' stato disegnato nel mockup il nuovo layout orizzontale (colonna sinistra fissa, colonna destra con le pagine) con la pagina Claude rifatta; il codice dell'interfaccia non e' ancora cambiato.
+
+**Cosa e' stato fatto:**
+- Aggiornamento automatico: il server controlla `VERSION` su GitHub (repository pubblico) all'avvio e ogni 5 minuti, scarica lo zip del branch, valida `server.py`, sostituisce i file (mantiene porta, token e stile; copie `.bak`) ed esce con codice 75; `start.bat` e `start_hidden.vbs` lo rilanciano. L'estensione si ricarica da sola se la versione sul disco cambia. Provato in locale con un "GitHub finto" (file://): installazione, impostazioni mantenute, secondo avvio "aggiornato".
+- Estensione 1.0.2: stato per sessione (`working` / `done` finche' non la guardi / `idle`) dalla frase "Claude sta rispondendo"; nome sessione senza frasi di stato ne' nomi di branch.
+- Mockup: colonna sinistra (orologio, CPU/RAM, musica, volume, comandi desktop) e colonna destra (schede + pagina a tutta altezza); pagina Claude con due manopole non usabili per i limiti, righe grandi per le sessioni con stato (tre puntini che saltano / spunta verde / cerchio vuoto) e contesto a manopola a destra.
+
+**Bug: i nomi delle sessioni erano frasi di stato**
+
+**Sintomo:** nelle etichette comparivano "Claude sta rispondendo" e "Claude ha terminato la risposta", e un nome di branch.
+**Causa:** la lettura del nome prendeva il primo testo nella barra in alto, che include queste frasi.
+**Fix applicato:** le frasi di stato e i nomi `claude/...` vengono scartati e si preferisce il testo dentro un pulsante; provato solo con pagine finte, da confermare sul sito vero.
+
+**Decisioni prese:**
+- Contesto: aggiornare a mano (scaricare, cancellare, reinstallare) era troppo laborioso.
+- Decisione: aggiornamento automatico dal branch di sviluppo `claude/intelligent-goodall-uozwj8` del repository pubblico.
+- Alternative scartate: `git pull` (richiede Git installato); token di accesso (inutile con repository pubblico).
+- Da rivedere se: il repository diventa privato o il branch cambia (impostabile con `updateBranch` in `settings`); chi puo' scrivere sul branch puo' far eseguire codice sul PC (disattivabile con `autoUpdate: false`).
+- Contesto: righe troppo piccole nella pagina Claude.
+- Decisione (da confermare nel mockup): layout orizzontale diviso in due colonne.
+
+**File consegnati/modificati:** `server.py`, `VERSION`, `start.bat`, `start_hidden.vbs`, `edge-extension/*`, `README.md`, `mockup/pannello.html`, `documento-sessione-gdc-stream-deck.md`
+
+**Impatto su Vision/Pipeline:** nuovo Step 7 (aggiornamento automatico); Step 5 aggiornato.
+
+---
 
 ### [2026-11-27 17:30] Estensione di Edge per limiti, contesto e sessioni di Claude
 

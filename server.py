@@ -9,6 +9,7 @@ Serve la pagina web in web/ e offre alla pagina:
   - pulsanti personalizzabili (buttons.json) in stile Stream Deck
 Su Windows invia tasti e comandi; su altri sistemi li simula (utile per provare).
 """
+import io
 import json
 import os
 import socket
@@ -16,6 +17,8 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.request
+import zipfile
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -57,6 +60,109 @@ def load_config():
             log("buttons.json non valido, tengo la versione precedente:", e)
         _cfg["mtime"] = m
     return _cfg["data"], _cfg["mtime"]
+
+
+# ---------------------------------------------------------------- aggiornamento automatico
+# Controlla su GitHub (repository pubblico) se c'e' una versione piu' nuova, scarica i file, li sostituisce e si riavvia.
+UPDATE = {"repo": "giandcdalcorso11-coder/GDC-stream-deck", "branch": "claude/intelligent-goodall-uozwj8"}
+UPDATE_PATHS = ("server.py", "start.bat", "start_hidden.vbs", "README.md", "VERSION", "buttons.json", "web/", "edge-extension/")
+RESTART_CODE = 75           # start.bat e start_hidden.vbs rilanciano il server quando esce con questo codice
+UPD = {"status": "mai controllato", "checked": 0}
+SRV = [None]
+RESTART = [False]
+
+
+def local_version():
+    try:
+        with open(os.path.join(BASE, "VERSION"), encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return "0"
+
+
+def _http_get(url, timeout=15):
+    req = urllib.request.Request(url, headers={"User-Agent": "gdc-panel-updater"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+def check_update():
+    """Ritorna 'aggiornato', 'installato' oppure un messaggio d'errore/disattivazione."""
+    settings = load_config()[0]["settings"]
+    if settings.get("autoUpdate") is False:
+        return "aggiornamento automatico disattivato"
+    repo, branch = UPDATE["repo"], settings.get("updateBranch", UPDATE["branch"])
+    raw = os.environ.get("PANEL_UPDATE_RAW") or "https://raw.githubusercontent.com/%s/%s/VERSION" % (repo, branch)
+    zurl = os.environ.get("PANEL_UPDATE_ZIP") or "https://codeload.github.com/%s/zip/refs/heads/%s" % (repo, branch)
+    remote = _http_get(raw).decode("utf-8", "replace").strip()
+    if not remote or len(remote) > 40:
+        raise ValueError("VERSION remoto non valido")
+    if remote == local_version():
+        return "aggiornato"
+    z = zipfile.ZipFile(io.BytesIO(_http_get(zurl, 90)))
+    names = z.namelist()
+    prefix = names[0].split("/")[0] + "/"
+    files = {}
+    for n in names:
+        rel = n[len(prefix):] if n.startswith(prefix) else ""
+        if not rel or n.endswith("/") or ".." in rel.split("/"):
+            continue
+        if any(rel == p or (p.endswith("/") and rel.startswith(p)) for p in UPDATE_PATHS):
+            files[rel] = z.read(n)
+    if "server.py" not in files or "web/index.html" not in files or "VERSION" not in files:
+        raise ValueError("pacchetto incompleto")
+    compile(files["server.py"], "server.py", "exec")           # sintassi valida prima di sostituire
+    if "buttons.json" in files:                                 # si tengono le impostazioni (porta, token, stile...)
+        new = json.loads(files["buttons.json"].decode("utf-8"))
+        try:
+            with open(CONFIG, encoding="utf-8") as f:
+                old = json.load(f)
+            new.setdefault("settings", {}).update(old.get("settings", {}))
+            with open(CONFIG + ".bak", "w", encoding="utf-8") as f:
+                json.dump(old, f, ensure_ascii=False, indent=2)
+        except (OSError, ValueError):
+            pass
+        files["buttons.json"] = json.dumps(new, ensure_ascii=False, indent=2).encode("utf-8")
+    order = [r for r in files if r != "VERSION"] + ["VERSION"]   # VERSION per ultimo: se qualcosa si interrompe, riprova
+    for rel in order:
+        path = os.path.join(BASE, *rel.split("/"))
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        if rel == "server.py" and os.path.exists(path):
+            with open(path, "rb") as f, open(path + ".bak", "wb") as g:
+                g.write(f.read())
+        tmp = path + ".new"
+        with open(tmp, "wb") as f:
+            f.write(files[rel])
+        os.replace(tmp, path)
+    return "installato"
+
+
+def update_once():
+    try:
+        UPD["status"] = check_update()
+    except Exception as e:
+        UPD["status"] = "errore: %s" % e
+    UPD["checked"] = time.time()
+    return UPD["status"] == "installato"
+
+
+def updater():
+    while True:
+        time.sleep(300)
+        if update_once():
+            log("Aggiornamento installato (versione %s): riavvio." % local_version())
+            RESTART[0] = True
+            if SRV[0]:
+                SRV[0].shutdown()
+            return
+
+
+def ext_version():
+    try:
+        with open(os.path.join(BASE, "edge-extension", "manifest.json"), encoding="utf-8") as f:
+            return json.load(f).get("version", "")
+    except (OSError, ValueError):
+        return ""
 
 
 def all_buttons(cfg):
@@ -559,6 +665,7 @@ def clean_claude(body):
         tabs.append({"id": int(t.get("id", 0)), "windowId": int(t.get("windowId", 0)),
                      "kind": _s(t.get("kind"), 12), "name": _s(t.get("name")), "project": _s(t.get("project"), 60),
                      "title": _s(t.get("title")), "current": bool(t.get("current")), "active": bool(t.get("active")),
+                     "status": t.get("status") if t.get("status") in ("idle", "working", "done") else "idle",
                      "context": int(ctx) if isinstance(ctx, (int, float)) else None})
     u = body.get("usage")
     usage = None
@@ -618,7 +725,8 @@ class Handler(BaseHTTPRequestHandler):
             if u.path == "/api/state":
                 cl = dict(CLAUDE)
                 cl["age"] = round(time.time() - cl["ts"], 1) if cl["ts"] else None
-                return self._send(200, dict(STATE, version=ver, volume=dict(VOLS), claude=cl))
+                return self._send(200, dict(STATE, version=ver, volume=dict(VOLS), claude=cl,
+                                            panel={"version": local_version(), "update": UPD["status"]}))
             if u.path == "/api/ext/poll":
                 # richiesta "lunga": l'estensione resta in attesa fino a 20 s di un comando dall'iPad
                 # I comandi restano in coda finche' l'estensione non li conferma (ack = ultimo id eseguito):
@@ -634,7 +742,7 @@ class Handler(BaseHTTPRequestHandler):
                         CCOND.wait(timeout=max(0.1, end - time.time()))
                         CMDS[:] = [c for c in CMDS if c["id"] > ack and time.time() - c["ts"] < 15]
                     cmds = [dict(c) for c in CMDS]
-                return self._send(200, {"epoch": EPOCH, "commands": cmds})
+                return self._send(200, {"epoch": EPOCH, "commands": cmds, "extVersion": ext_version()})
             return self._send(404, {"error": "not found"})
         name = "index.html" if u.path == "/" else u.path.lstrip("/")
         full = os.path.realpath(os.path.join(WEB, name))
@@ -674,6 +782,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not btn:
                     return self._send(404, {"error": "pulsante sconosciuto"})
                 run_action(btn.get("action", {}))
+            elif u.path == "/api/update":
+                threading.Thread(target=_manual_update, daemon=True).start()
             elif u.path == "/api/ext/state":
                 CLAUDE.update(clean_claude(body))
             elif u.path == "/api/claude/focus":
@@ -697,6 +807,13 @@ class Handler(BaseHTTPRequestHandler):
             self._send(400, {"error": str(e)})
 
 
+def _manual_update():
+    if update_once():
+        RESTART[0] = True
+        if SRV[0]:
+            SRV[0].shutdown()
+
+
 def local_ip():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -711,20 +828,30 @@ def local_ip():
 def main():
     cfg = load_config()[0]
     port = int(os.environ.get("PANEL_PORT") or (sys.argv[1] if len(sys.argv) > 1 else cfg["settings"].get("port", 8080)))
+    log("Pannello versione %s" % local_version())
+    if update_once():                      # all'avvio: se c'e' una versione nuova la installa e riparte
+        log("Aggiornamento installato (versione %s): riavvio." % local_version())
+        sys.exit(RESTART_CODE)
+    log("Aggiornamento: %s" % UPD["status"])
     threading.Thread(target=sampler, daemon=True).start()
     threading.Thread(target=audio_worker, daemon=True).start()
+    threading.Thread(target=updater, daemon=True).start()
     try:
         srv = ThreadingHTTPServer(("0.0.0.0", port), Handler)
     except OSError as e:
         log("Impossibile usare la porta %d: %s" % (port, e))
         sys.exit(1)
     srv.daemon_threads = True
+    SRV[0] = srv
     tok = cfg["settings"].get("token", "")
     log("Pannello attivo. Sull'iPad apri:  http://%s:%d/%s" % (local_ip(), port, ("?t=" + tok) if tok else ""))
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
         pass
+    if RESTART[0]:
+        srv.server_close()
+        sys.exit(RESTART_CODE)
 
 
 if __name__ == "__main__":
