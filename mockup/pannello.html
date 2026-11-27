@@ -132,10 +132,10 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 #stage.port.t-dj #master{flex-basis:250px}
 
 /* ===== disposizione orizzontale: colonna sinistra sempre visibile + colonna destra con le pagine ===== */
-#left,#right,#toprow{display:contents}
+#leftcol,#rightcol,#toprow{display:contents}
 #stage.land{grid-template-columns:400px 1fr;grid-template-rows:1fr;grid-template-areas:"left right"}
-#stage.land #left{display:flex;flex-direction:column;grid-area:left;min-height:0}
-#stage.land #right{display:flex;flex-direction:column;grid-area:right;min-height:0}
+#stage.land #leftcol{display:flex;flex-direction:column;grid-area:left;min-height:0}
+#stage.land #rightcol{display:flex;flex-direction:column;grid-area:right;min-height:0}
 #stage.land #toprow{display:flex;height:108px;flex:none}
 #stage.land #c1{flex:1.35}#stage.land #sys{flex:1;margin-left:12px}
 #stage.land #clock{font-size:42px}#stage.land.t-dj #clock{font-size:36px}#stage.land #date{font-size:14px}
@@ -166,6 +166,25 @@ svg.i{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stro
 .st i:nth-child(2){animation-delay:.15s}.st i:nth-child(3){animation-delay:.3s}
 @keyframes bnc{0%,70%,100%{transform:translateY(0)}35%{transform:translateY(-6px)}}
 .t-dj .sx{background:linear-gradient(#26272b,#18191b);border:1px solid #000}
+
+/* ===== revisione 2 ===== */
+#stage.land{grid-template-columns:360px 1fr}
+#stage.land #toprow{height:112px}
+#stage.land #c1{flex:1;justify-content:center}
+#stage.land #clock{font-size:60px}#stage.land.t-dj #clock{font-size:46px}#stage.land #date{font-size:17px;margin-top:2px}
+#stage.land #clock small{font-size:26px}
+#stage.land #sys{flex:none;width:82px;margin-left:12px}
+#sys{display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:4px}
+#sys svg{display:block}
+#stage.land #c2{height:104px}
+#stage.land #art{width:46px;height:46px}#stage.land #song{font-size:17px}#stage.land #artist{font-size:12px}
+#stage.land #tr{margin-top:6px}#stage.land .tb{height:34px}
+.kn{margin:0 auto}
+#stage.land #apps{justify-content:space-evenly}
+#stage.land #deskrow{height:176px;grid-template-rows:1fr 1fr}#stage.land .dkb{font-size:11px;line-height:1.1}#stage.land .dkb svg.i{width:22px;height:22px}
+.cvl{justify-content:space-evenly}
+.dl{display:flex;align-items:center;text-align:left}
+.dl svg{margin:0 10px 0 0}.dl .tt{margin-top:0}
 </style></head><body>
 <div id="top"><div class="g" id="sty"><span>Stile</span></div><div class="g" id="ori"><span>iPad</span></div>
 <div id="note">Le pagine cambiano da sole in base al programma in primo piano; qui puoi toccare le schede per vederle. I tasti di Claude, DaVinci e Bambu sono provvisori, da verificare insieme.</div></div>
@@ -254,7 +273,7 @@ function ctl(id,size){
   s.addEventListener('pointerup',function(){s.onpointermove=null});
   box.appendChild(s);box.appendChild(label);draw();return box;
  }
- var D=size=='lg'?(orient=='land'?150:140):(orient=='land'?72:92),R=D/2-(size=='lg'?12:8),sw=size=='lg'?11:8,c=D/2;
+ var D=size=='lg'?(orient=='land'?164:140):(orient=='land'?58:92),R=D/2-(size=='lg'?12:8),sw=size=='lg'?11:8,c=D/2;
  var svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 '+D+' '+D);svg.setAttribute('width',D);svg.setAttribute('height',D);svg.setAttribute('class','kn');
  function pt(a,r){a=a*Math.PI/180;return [c+r*Math.cos(a),c+r*Math.sin(a)]}
  function arc(v,r){var a0=135,a1=135+270*v,p0=pt(a0,r),p1=pt(a1,r);return 'M'+p0+' A'+r+' '+r+' 0 '+((a1-a0)>180?1:0)+' 1 '+p1}
@@ -279,38 +298,41 @@ function ic(n){return '<svg class="i"><use href="#'+n+'"/></svg>'}
 function dial(pct,D,sw,col,txt,fs){var c=D/2,R=c-sw/2-1;function pt(a){a=a*Math.PI/180;return [c+R*Math.cos(a),c+R*Math.sin(a)]}
  function arc(v){var a1=135+270*v,p0=pt(135),p1=pt(a1);return 'M'+p0+' A'+R+' '+R+' 0 '+((a1-135)>180?1:0)+' 1 '+p1}
  return '<svg width="'+D+'" height="'+D+'" viewBox="0 0 '+D+' '+D+'"><path d="'+arc(1)+'" fill="none" stroke="rgba(128,128,128,.3)" stroke-width="'+sw+'" stroke-linecap="round"/><path d="'+arc(Math.max(pct/100,.004))+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linecap="round"/><text x="'+c+'" y="'+(c+fs*.35)+'" text-anchor="middle" font-size="'+fs+'" font-weight="700" fill="currentColor" style="font-family:inherit">'+txt+'</text></svg>'}
+function dial2(pct,D,sw,col,label){var c=D/2,R=c-sw/2-1;function pt(a){a=a*Math.PI/180;return [c+R*Math.cos(a),c+R*Math.sin(a)]}
+ function arc(v){var a1=135+270*v,p0=pt(135),p1=pt(a1);return 'M'+p0+' A'+R+' '+R+' 0 '+((a1-135)>180?1:0)+' 1 '+p1}
+ return '<svg width="'+D+'" height="'+D+'" viewBox="0 0 '+D+' '+D+'"><path d="'+arc(1)+'" fill="none" stroke="rgba(128,128,128,.3)" stroke-width="'+sw+'" stroke-linecap="round"/><path d="'+arc(Math.max(pct/100,.004))+'" fill="none" stroke="'+col+'" stroke-width="'+sw+'" stroke-linecap="round"/><text x="'+c+'" y="'+(c-1)+'" text-anchor="middle" font-size="9" fill="currentColor" opacity=".7" style="font-family:inherit">'+label+'</text><text x="'+c+'" y="'+(c+12)+'" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor" style="font-family:inherit">'+pct+'%</text></svg>'}
 function stIcon(s){return '<span class="st '+s+'">'+(s=='working'?'<i></i><i></i><i></i>':s=='done'?'<svg class="i"><use href="#chk"/></svg>':'')+'</span>'}
-var SESS=[{p:'CNC 2D',t:[{n:'Macchina: fresatura lato B con la nuova fresa',c:54,s:'working',on:1},{n:'Preparazione stampe',c:91,s:'done'}]},{p:'GDC-stream-deck',t:[{n:'Pannello iPad: layout',c:33,s:'idle'},{n:'Revisione server',c:78,s:'idle'}]},{p:'Da Vinci plugin',t:[{n:'Modelli video IA',c:27,s:'done'}]}];
+var SESS=[{p:'CNC 2D',t:[{n:'Macchina: fresatura lato B con la nuova fresa',c:54,s:'working',on:1},{n:'Preparazione stampe',c:91,s:'done'}]},{p:'GDC-stream-deck',t:[{n:'Pannello iPad: layout',c:33,s:'idle'},{n:'Revisione server',c:78,s:'idle'}]},{p:'Da Vinci plugin',t:[{n:'Modelli video IA',c:27,s:'done'}]},{p:'Video system GDC',t:[{n:'Studio: nuovo montaggio',c:15,s:'idle'}]}];
 function claudeView(){
  var big=orient=='land',cv=el('div','cv'),u=el('div','panel','<h4>Utilizzo</h4>'),row=el('div','cvl');
- [['Limite di 5 ore',68,'si azzera alle 18:50 (tra 1 h 12 min)'],['Settimanale',84,'si azzera sab 02:00']].forEach(function(l){var d=el('div','dl');d.innerHTML=dial(l[1],big?98:80,big?10:8,l[1]>=85?'var(--danger)':'var(--accent)',l[1]+'%',big?23:19)+'<div class="tt">'+l[0]+'</div><small>'+l[2]+'</small>';row.appendChild(d)});
+ [['Limite di 5 ore',68,'si azzera alle 18:50 (tra 1 h 12 min)'],['Settimanale',84,'si azzera sab 02:00']].forEach(function(l){var d=el('div','dl');d.innerHTML=dial(l[1],big?60:56,6,l[1]>=85?'var(--danger)':'var(--accent)',l[1]+'%',big?15:14)+'<div><div class="tt">'+l[0]+'</div><small>'+l[2]+'</small></div>';row.appendChild(d)});
  u.appendChild(row);
  var ss=el('div','panel cvs','<h4>Sessioni aperte &nbsp;<span style="text-transform:none;letter-spacing:0">(nel mockup, tocca una riga per cambiare lo stato)</span></h4>'),list=el('div','lst');ss.appendChild(list);
  function draw(){list.innerHTML='';SESS.forEach(function(g){list.appendChild(el('div','gh',g.p));g.t.forEach(function(t){var r=el('div','sx'+(t.on?' on':''),'<div class="nm">'+t.n+'</div>'+stIcon(t.s)+'<div class="cx2">'+dial(t.c,46,5,t.c>=85?'var(--danger)':t.c>=70?'#f5a623':'var(--accent)',t.c,13)+'</div>');r.onclick=function(){t.s={idle:'working',working:'done',done:'idle'}[t.s];draw()};list.appendChild(r)})})}
  draw();
- var bb=el('div','cvb');bb.appendChild(el('button','tb',ic('chat')+'&nbsp;Nuova'));bb.appendChild(el('button','tb',ic('globe')+'&nbsp;Utilizzo'));bb.appendChild(el('button','tb',ic('mic')+'&nbsp;Dettatura'));
- cv.appendChild(u);cv.appendChild(ss);cv.appendChild(bb);return cv}
+ 
+ cv.appendChild(u);cv.appendChild(ss);return cv}
 function build(){
  var st=document.getElementById('stage');st.className='t-'+theme+' '+orient;
  st.innerHTML='';
  var c1=el('section','card','<div id="clock">14:32<small>07</small></div><div id="date">giovedì 26 novembre</div>');c1.id='c1';
- var sys=el('section','card','<div><div class="ms">CPU<b>32%</b></div><div class="bar"><i style="width:32%"></i></div></div><div><div class="ms">RAM<b>61%</b></div><div class="bar"><i style="width:61%"></i></div></div>');sys.id='sys';
- var c2=el('section','card','<div id="now"><div id="art">'+ic('note').replace('class="i"','class="i" style="width:36px;height:36px"')+'</div><div><div id="song">Instant Crush</div><div id="artist">Daft Punk</div></div></div><div id="tr"><button class="tb">'+ic('prev')+'</button><button class="tb big">'+ic('pp')+'</button><button class="tb">'+ic('next')+'</button><button class="tb">'+ic('mute')+'</button></div>');c2.id='c2';
+ var sd=orient=='land'?54:60;var sys=el('section','card',dial2(32,sd,5,'var(--accent)','CPU')+dial2(61,sd,5,'var(--accent)','RAM'));sys.id='sys';
+ var c2=el('section','card','<div id="now"><div id="art">'+ic('note').replace('class="i"','class="i" style="width:36px;height:36px"')+'</div><div><div id="song">Instant Crush</div><div id="artist">Daft Punk</div></div></div><div id="tr"><button class="tb">'+ic('prev')+'</button><button class="tb big">'+ic('pp')+'</button><button class="tb">'+ic('next')+'</button></div>');c2.id='c2';
  var vol=el('section','card');vol.id='vol';var m=el('div');m.id='master';var a=el('div');a.id='apps';
  m.appendChild(ctl('master','lg'));
  ['spotify','edge','discord'].forEach(function(id){var d=el('div','app');d.appendChild(ctl(id,'sm'));a.appendChild(d)});
  vol.appendChild(m);vol.appendChild(a);
  var strip=el('section');strip.id='strip';var db=el('section');db.id='deskrow';
- DESK.forEach(function(d){var b=el('button','key dkb'+(d[3]?' wide':''),ic(d[0])+'<span>'+d[1]+'</span>');b.setAttribute('data-c',d[2]);db.appendChild(b)});
+ (orient=='land'?[DESK[3],DESK[4],DESK[2],DESK[0],DESK[1]]:DESK).forEach(function(d){var b=el('button','key dkb'+(d[3]?' wide':''),ic(d[0])+'<span>'+d[1]+'</span>');b.setAttribute('data-c',d[2]);db.appendChild(b)});
  var tabs=el('div');tabs.id='tabs';
  Object.keys(PAGES).forEach(function(k){var b=el('button','tab'+(k==page?' on':''),PAGES[k].n);b.onclick=function(){page=k;build()};tabs.appendChild(b)});
  strip.appendChild(tabs);
  var dk=el('section');dk.id='deck';
  if(PAGES[page].view){dk.appendChild(claudeView())}else PAGES[page].k.forEach(function(k){var b=el('button','key'+(k[4]?' '+k[4]:''),ic(k[0])+'<span>'+k[1]+'</span>');b.setAttribute('data-c',k[2]);var sp=Array.isArray(k[3])?k[3][orient=='land'?0:1]:k[3];if(sp>1){b.style.gridColumn='span '+sp}dk.appendChild(b)});
  var rw=PAGES[page].rows;if(rw){dk.style.gridTemplateRows='repeat('+rw[orient]+',1fr)'}
- var left=el('div');left.id='left';var top2=el('div');top2.id='toprow';top2.appendChild(c1);top2.appendChild(sys);
+ var left=el('div');left.id='leftcol';var top2=el('div');top2.id='toprow';top2.appendChild(c1);top2.appendChild(sys);
  left.appendChild(top2);left.appendChild(c2);left.appendChild(vol);left.appendChild(db);
- var right=el('div');right.id='right';right.appendChild(strip);right.appendChild(dk);
+ var right=el('div');right.id='rightcol';right.appendChild(strip);right.appendChild(dk);
  st.appendChild(left);st.appendChild(right);
  if(orient=='land'){var SP=[2,2,2,3,3];Array.prototype.forEach.call(db.children,function(b,i){b.style.gridColumn='span '+SP[i]})}
  if(theme=='dj'){var w=document.createElementNS('http://www.w3.org/2000/svg','svg');w.setAttribute('class','wave');w.setAttribute('viewBox','0 0 500 60');w.setAttribute('preserveAspectRatio','none');var h='';for(var x=0;x<500;x+=4){var q=7+Math.abs(Math.sin(x/17)*Math.sin(x/53))*22;h+='<rect x="'+x+'" y="'+(30-q)+'" width="2" height="'+(q*2)+'" fill="'+(x<220?'#2f9bff':'#1c4f8a')+'"/>'}w.innerHTML=h;c2.appendChild(w)}
