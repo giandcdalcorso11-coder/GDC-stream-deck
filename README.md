@@ -26,6 +26,11 @@ Per disattivarlo metti `"autoUpdate": false` in `settings` di `buttons.json`.
 - iOS non permette di aprire un'app in automatico all'accensione: dopo un riavvio tocca l'icona una volta.
 
 ## Come si usa
+- **Due modalita' in orizzontale:** a riposo (pagina *Predefinito*) la parte con orologio, volume e comandi desktop
+  occupa quasi tutto lo schermo e la pagina predefinita e' una striscia stretta a destra (icone per cambiare pagina
+  e cinque pulsanti). Quando un programma con una pagina (Claude, DaVinci, Bambu...) e' in primo piano, la parte
+  di sinistra si restringe e a destra compare la pagina del programma, con una breve animazione. In verticale resta
+  il layout unico.
 - **Orizzontale** (davanti alla tastiera) o **verticale** (a sinistra): la pagina si adatta da sola.
 - **Stili:** tocca l'**orologio** per cambiare stile (Windows, Apple Glass, Neon, DJ). Lo stile resta salvato sull'iPad.
   Windows e DJ usano slider/fader, Apple e Neon usano manopole (si girano con un gesto circolare).
@@ -38,7 +43,7 @@ Per disattivarlo metti `"autoUpdate": false` in `settings` di `buttons.json`.
 
 ## Pagina Claude (estensione di Edge)
 La pagina Claude mostra i limiti di 5 ore e settimanali e, per ogni sessione di Claude Code aperta in Edge, il suo
-contesto (rosso da 85%, arancione da 70%: e' il momento di fare un compact). Toccando una sessione Edge la porta
+contesto (rosso da 85%, arancione da 70%: e' il momento di fare un compact) e lo stato di ogni sessione (tre puntini = sta rispondendo, spunta verde = ha finito e non l'hai ancora vista, cerchio vuoto = ferma). Toccando una sessione Edge la porta
 in primo piano. Serve l'estensione nella cartella `edge-extension` (istruzioni in `edge-extension/LEGGIMI.txt`):
 si installa una sola volta e le autorizzazioni non vengono piu' richieste. Se la porta del server non e' 8080 o hai
 messo un token, impostali dall'icona dell'estensione.

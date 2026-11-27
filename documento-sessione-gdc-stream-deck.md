@@ -1,7 +1,7 @@
 # Documento di Sessione — GDC Stream Deck
 
-**Versione:** 7
-**Ultimo aggiornamento:** 2026-11-27 19:50
+**Versione:** 8
+**Ultimo aggiornamento:** 2026-11-27 20:10
 
 ## Vision
 
@@ -110,6 +110,37 @@ perché finora è stata provata solo in modalità simulata su Linux.
 - [2026-11-27] Implementato e provato in locale; da provare con una vera pubblicazione dopo l'installazione di questa versione.
 
 ## Storico sessioni
+
+### [2026-11-27 20:10] Nuovo layout portato nel codice (versione 2 del pannello)
+
+**Riepilogo:** il layout approvato nel mockup (due modalita' in orizzontale, CPU/RAM a manopola, musica ridotta, comandi desktop riordinati, pagina Claude con limiti, stati e contesto) e' stato inserito nel codice vero e pubblicato con VERSION 2; provato in simulazione, non ancora sull'iPad.
+
+**Cosa e' stato fatto:**
+- `web/style.css` e `web/app.js` riscritti: colonna sinistra/destra in flex (la transizione di larghezza funziona su Safari 12, quella delle griglie no), modalita' `idle` (sinistra 880 px, destra 104 px con icone pagina e 5 pulsanti) e `app` (sinistra 360 px); cambio pagina automatico dal programma in primo piano con dissolvenza e animazione della larghezza.
+- CPU/RAM: due mini manopole non usabili; musica senza tasto muto; manopola del volume piu' grande al centro a riposo.
+- Comandi desktop: ordine e dimensioni da `buttons.json` (`flex`, `appOrder`, `appSpan`): a riposo e in verticale precedente/successivo grandi a sinistra; con un programma nuovo/chiudi/panoramica sopra e precedente/successivo grandi sotto.
+- Pagina Claude: limiti a manopola compatti con titolo e orario, righe grandi per le sessioni (stato a tre puntini/spunta/cerchio vuoto e contesto a manopola, arancione da 70% e rosso da 85%); tocco su una riga = Edge porta la scheda in primo piano.
+- Server: le pagine espongono `icon` e `view`, i pulsanti `flex`/`appOrder`/`appSpan`.
+- Provato con Playwright (dati finti inviati come farebbe l'estensione): modalita' a riposo nei quattro stili, passaggio a Claude, ritorno, verticale, cambio pagina automatico dal programma, comando di focus per Edge; nessun errore in console; sintassi ES5 valida.
+
+**Bug: i comandi desktop diventavano strisce sottili con un programma attivo**
+
+**Sintomo:** nella modalita' con programma i cinque pulsanti erano larghi pochi pixel.
+**Causa:** `width: 0` della riga a riposo (flex) ereditato dalla griglia della modalita' con programma.
+**Fix applicato:** `width: auto` in modalita' con programma; verificato con screenshot.
+
+**Decisioni prese:**
+- Contesto: layout orizzontale con due modalita'.
+- Decisione: modalita' dedotta dalla pagina (Predefinito = riposo); in verticale resta un solo layout.
+- Da rivedere se: sulle righe delle sessioni servisse scorrere (ora ne entrano circa 7 e le altre restano nascoste).
+
+**Limiti noti:** l'animazione e il layout vanno visti sull'iPad vero (Safari 12); l'elenco sessioni non scorre; resta da confermare che l'estensione legga bene lo stato "sta rispondendo" sul sito vero.
+
+**File consegnati/modificati:** `web/style.css`, `web/app.js`, `web/index.html`, `server.py`, `buttons.json`, `VERSION`, `README.md`, `documento-sessione-gdc-stream-deck.md`
+
+**Impatto su Vision/Pipeline:** Step 5 aggiornato.
+
+---
 
 ### [2026-11-27 19:50] Aggiornamento automatico, stato delle sessioni e nuovo layout (mockup)
 

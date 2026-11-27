@@ -4,17 +4,19 @@
   var token = (/[?&]t=([^&]+)/.exec(location.search) || [])[1] || '';
   var THEMES = ['windows', 'apple', 'neon', 'dj'];
   var KIND = { windows: 'slider', apple: 'knob', neon: 'knob', dj: 'fader' };
+  var PAL = { windows: { acc: '#0078d4', dng: '#e5484d' }, apple: { acc: '#ffffff', dng: '#ff9c9c' }, neon: { acc: '#00f0ff', dng: '#ff3b6b' }, dj: { acc: '#ff9d00', dng: '#ff3b30' } };
   var stage = document.getElementById('stage');
 
   var cfg = null, cfgVersion = null, fails = 0;
   var theme = 'windows', page = 'default', autoProfile = null, orient = 'land';
-  var vols = {}, ctls = {}, lockUntil = {}, lastSend = {}, sendT = {};
+  var vols = {}, ctls = {}, lockUntil = {}, lastSend = {}, sendT = {}, lastState = null;
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, html) { var e = document.createElement(tag); if (cls) { e.className = cls; } if (html) { e.innerHTML = html; } return e; }
   function ic(n) { return '<svg class="i"><use href="#ic-' + n + '" xlink:href="#ic-' + n + '"></use></svg>'; }
   function clamp(v) { return Math.max(0, Math.min(100, v)); }
   function now() { return new Date().getTime(); }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
   // etichette dal file di configurazione: solo testo, con <br> per andare a capo
   function setText(node, text) {
     var parts = String(text || '').split('<br>'), i;
@@ -24,6 +26,7 @@
       node.appendChild(document.createTextNode(parts[i]));
     }
   }
+  function modeOf() { return orient === 'land' && page === 'default' ? 'idle' : 'app'; }
 
   /* ---- rete ---- */
   function api(method, path, body, cb) {
@@ -58,7 +61,6 @@
     stage.style.left = Math.max(0, (w - sw * k) / 2) + 'px';
     stage.style.top = Math.max(0, (h - sh * k) / 2) + 'px';
   }
-  function stageScale() { var r = stage.getBoundingClientRect(); return r.width / stage.offsetWidth || 1; }
 
   /* ---- trascinamento: tocco e mouse ---- */
   function drag(node, onStart, onMove, onEnd) {
@@ -79,6 +81,20 @@
     });
   }
 
+  /* ---- quadranti disegnati (non usabili): limiti, contesto, CPU/RAM ---- */
+  function arcPath(c, R, v) {
+    var a1 = 135 + 270 * v, r0 = 135 * Math.PI / 180, r1 = a1 * Math.PI / 180;
+    return 'M' + (c + R * Math.cos(r0)) + ' ' + (c + R * Math.sin(r0)) + ' A' + R + ' ' + R + ' 0 ' + ((a1 - 135) > 180 ? 1 : 0) + ' 1 ' + (c + R * Math.cos(r1)) + ' ' + (c + R * Math.sin(r1));
+  }
+  function dial(pct, D, sw, col, txt, fs, label) {
+    var c = D / 2, R = c - sw / 2 - 1;
+    var t = label
+      ? '<text x="' + c + '" y="' + (c - 1) + '" text-anchor="middle" font-size="9" fill="currentColor" opacity=".7" style="font-family:inherit">' + label + '</text><text x="' + c + '" y="' + (c + 12) + '" text-anchor="middle" font-size="' + fs + '" font-weight="700" fill="currentColor" style="font-family:inherit">' + txt + '</text>'
+      : '<text x="' + c + '" y="' + (c + fs * 0.35) + '" text-anchor="middle" font-size="' + fs + '" font-weight="700" fill="currentColor" style="font-family:inherit">' + txt + '</text>';
+    return '<svg width="' + D + '" height="' + D + '" viewBox="0 0 ' + D + ' ' + D + '"><path d="' + arcPath(c, R, 1) + '" fill="none" stroke="rgba(128,128,128,.3)" stroke-width="' + sw + '" stroke-linecap="round"/>' +
+      '<path d="' + arcPath(c, R, Math.max(pct / 100, 0.004)) + '" fill="none" stroke="' + col + '" stroke-width="' + sw + '" stroke-linecap="round"/>' + t + '</svg>';
+  }
+
   /* ---- volume ---- */
   function postVol(id) { api('POST', '/api/volume', { target: id, value: Math.round(vols[id] || 0) }); }
   function sendVol(id) {
@@ -90,6 +106,7 @@
 
   function control(id, name, size) {
     var kind = KIND[theme], box = el('div', 'ctl'), label = el('div', 'lbl'), obj = { draw: null };
+    var L = orient === 'land', I = modeOf() === 'idle', big = size === 'lg', i;
     function drawLabel() {
       var v = vols[id];
       label.innerHTML = '';
@@ -98,10 +115,11 @@
       box.className = 'ctl' + (v == null ? ' off' : '');
     }
     function val() { return vols[id] == null ? 0 : vols[id]; }
-    var big = size === 'lg', i;
 
     if (kind === 'fader') {
-      var H = big ? 130 : 104, CH = big ? 28 : 22, fd = el('div', 'fd ' + size, '<div class="scale"></div><div class="slot"></div><div class="cap"></div>');
+      var H = big ? (I ? 150 : 130) : (I ? 120 : (L ? 90 : 104)), CH = big ? 28 : 22;
+      var fd = el('div', 'fd ' + size, '<div class="scale"></div><div class="slot"></div><div class="cap"></div>');
+      fd.style.height = H + 'px';
       var cap = fd.querySelector('.cap'), vu = null;
       obj.draw = function () {
         cap.style.top = (8 + (100 - val()) / 100 * (H - 16) - CH / 2) + 'px'; drawLabel();
@@ -110,7 +128,7 @@
       var mvF = function (p) { var r = fd.getBoundingClientRect(), k = r.height / H; setVol(id, 100 - (p.y - r.top - 8 * k) / ((H - 16) * k) * 100); };
       drag(fd, mvF, mvF, function () { postVol(id); });
       var row = el('div', 'fdrow'); row.appendChild(fd);
-      if (big) { vu = el('div', 'vu'); for (i = 0; i < 12; i++) { vu.appendChild(el('i')); } row.appendChild(vu); }
+      if (big) { vu = el('div', 'vu'); vu.style.height = H + 'px'; for (i = 0; i < 12; i++) { vu.appendChild(el('i')); } row.appendChild(vu); }
       box.appendChild(row); box.appendChild(label);
     } else if (kind === 'slider') {
       var s = el('div', 'sl ' + size, '<div class="tk"></div><div class="fl"></div><div class="th"></div>');
@@ -121,17 +139,16 @@
       box.appendChild(s); box.appendChild(label);
     } else {
       // manopola: si gira con un gesto circolare attorno al centro (orario = piu' volume)
-      var D = big ? 140 : 92, R = D / 2 - (big ? 12 : 8), sw = big ? 11 : 8, c = D / 2, ap = theme === 'apple', nn = theme === 'neon';
+      var D = big ? (L ? (I ? 196 : 164) : 140) : (L ? (I ? 104 : 58) : 92), R = D / 2 - (big ? 12 : 8), sw = big ? 11 : 8, c = D / 2, ap = theme === 'apple', nn = theme === 'neon';
       var NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
       svg.setAttribute('viewBox', '0 0 ' + D + ' ' + D); svg.setAttribute('width', D); svg.setAttribute('height', D); svg.setAttribute('class', 'kn');
       var pt = function (a, r) { a = a * Math.PI / 180; return [c + r * Math.cos(a), c + r * Math.sin(a)]; };
-      var arc = function (v, r) { var a1 = 135 + 270 * v, p0 = pt(135, r), p1 = pt(a1, r); return 'M' + p0[0] + ' ' + p0[1] + ' A' + r + ' ' + r + ' 0 ' + ((a1 - 135) > 180 ? 1 : 0) + ' 1 ' + p1[0] + ' ' + p1[1]; };
       var gloss = function (r) { var p0 = pt(200, r - 3), p1 = pt(290, r - 3); return 'M' + p0[0] + ' ' + p0[1] + ' A' + (r - 3) + ' ' + (r - 3) + ' 0 0 1 ' + p1[0] + ' ' + p1[1]; };
       obj.draw = function () {
         var v = val() / 100, ri = R - sw - 4, a = pt(135 + 270 * v, ri - 3), b = pt(135 + 270 * v, ri - (big ? 24 : 14));
         svg.innerHTML =
-          '<path d="' + arc(1, R) + '" fill="none" stroke="' + (ap ? 'rgba(255,255,255,.22)' : '#1a1a44') + '" stroke-width="' + sw + '" stroke-linecap="round"/>' +
-          '<path d="' + arc(Math.max(v, 0.002), R) + '" fill="none" stroke="' + (ap ? '#fff' : '#00f0ff') + '" stroke-width="' + sw + '" stroke-linecap="round"' + (nn ? ' style="filter:drop-shadow(0 0 6px #00f0ff)"' : '') + '/>' +
+          '<path d="' + arcPath(c, R, 1) + '" fill="none" stroke="' + (ap ? 'rgba(255,255,255,.22)' : '#1a1a44') + '" stroke-width="' + sw + '" stroke-linecap="round"/>' +
+          '<path d="' + arcPath(c, R, Math.max(v, 0.002)) + '" fill="none" stroke="' + (ap ? '#fff' : '#00f0ff') + '" stroke-width="' + sw + '" stroke-linecap="round"' + (nn ? ' style="filter:drop-shadow(0 0 6px #00f0ff)"' : '') + '/>' +
           '<circle cx="' + c + '" cy="' + c + '" r="' + ri + '" fill="' + (ap ? 'rgba(255,255,255,.16)' : '#0d0d2b') + '" ' + (nn ? 'stroke="#00f0ff" stroke-opacity=".5"' : ap ? 'stroke="rgba(255,255,255,.6)" stroke-width="1.5"' : '') + '/>' +
           (ap ? '<path d="' + gloss(ri) + '" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2" stroke-linecap="round"/>' : '') +
           '<line x1="' + b[0] + '" y1="' + b[1] + '" x2="' + a[0] + '" y2="' + a[1] + '" stroke="' + (ap ? '#fff' : '#00f0ff') + '" stroke-width="' + (big ? 5 : 3) + '" stroke-linecap="round"/>' +
@@ -152,11 +169,12 @@
     return box;
   }
 
-  /* ---- costruzione dell'interfaccia ---- */
+  /* ---- luminosita' ---- */
   var dimLevel = 0, DIMS = [0, 0.4, 0.7];
   try { dimLevel = parseInt(localStorage.getItem('dim'), 10) || 0; } catch (e) {}
   function applyDim() { $('dim').style.opacity = DIMS[dimLevel]; }
 
+  /* ---- pulsanti ---- */
   function keyButton(b, extra) {
     var k = el('button', 'key' + (extra || '') + (b.small ? ' sm' : ''), ic(b.icon));
     var s = el('span'); setText(s, b.label); k.appendChild(s);
@@ -170,8 +188,7 @@
     return k;
   }
 
-
-  /* ---- pagina Claude: limiti di utilizzo e sessioni aperte (dati dall'estensione di Edge) ---- */
+  /* ---- pagina Claude: limiti e sessioni (dati dall'estensione di Edge) ---- */
   var cvSig = '', DAYS_SHORT = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab'];
   function hhmm(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
   function resetText(l, weekly) {
@@ -182,27 +199,23 @@
     var mins = Math.max(0, Math.round((d.getTime() - now()) / 60000));
     return 'si azzera alle ' + hhmm(d) + ' (tra ' + (mins >= 60 ? Math.floor(mins / 60) + ' h ' : '') + (mins % 60) + ' min)';
   }
-  function usageBar(title, l, weekly) {
-    var d = el('div', 'ub' + (l && l.pct >= 85 ? ' warn' : ''));
-    var t = el('div', 't'); t.appendChild(el('span', '', '')); t.firstChild.appendChild(document.createTextNode(title));
-    t.appendChild(el('b', '', l ? Math.round(l.pct) + '%' : '&mdash;'));
-    var bar = el('div', 'bar', '<i style="width:' + (l ? Math.min(100, l.pct) : 0) + '%"></i>');
-    var sm = el('small'); sm.appendChild(document.createTextNode(l ? resetText(l, weekly) : 'non disponibile'));
-    d.appendChild(t); d.appendChild(bar); d.appendChild(sm);
+  function limitDial(title, l, weekly) {
+    var pal = PAL[theme], d = el('div', 'dl');
+    var col = l && l.pct >= 85 ? pal.dng : pal.acc;
+    d.innerHTML = dial(l ? l.pct : 0, 60, 6, col, l ? Math.round(l.pct) + '%' : '--', 15);
+    var t = el('div'), tt = el('div', 'tt'), sm = el('small');
+    tt.appendChild(document.createTextNode(title)); sm.appendChild(document.createTextNode(l ? resetText(l, weekly) : 'non disponibile'));
+    t.appendChild(tt); t.appendChild(sm); d.appendChild(t);
     return d;
   }
-  function claudeShell(cur) {
-    var cv = el('div', 'cv'), u = el('div', 'panel'), ss = el('div', 'panel');
+  function stIcon(st) {
+    return '<span class="st ' + st + '">' + (st === 'working' ? '<i></i><i></i><i></i>' : st === 'done' ? ic('chk') : '') + '</span>';
+  }
+  function claudeShell() {
+    var cv = el('div', 'cv'), u = el('div', 'panel'), ss = el('div', 'panel cvs');
     u.id = 'cvu'; ss.id = 'cvs';
-    var bb = el('div', 'cvb');
-    cur.buttons.forEach(function (b) {
-      var k = el('button', 'tb', ic(b.icon)); k.appendChild(document.createTextNode('\u00a0'));
-      var s2 = el('span'); setText(s2, b.label); k.appendChild(s2);
-      k.addEventListener('click', function () { api('POST', '/api/press', { id: b.id }); });
-      bb.appendChild(k);
-    });
-    u.appendChild(el('h4', '', 'Utilizzo')); u.appendChild(el('div', '', '')); u.appendChild(bb);
-    ss.appendChild(el('h4', '', 'Sessioni aperte (una riga per finestra di Edge)')); ss.appendChild(el('div', '', ''));
+    u.appendChild(el('h4', '', 'Utilizzo')); u.appendChild(el('div', '', ''));
+    ss.appendChild(el('h4', '', 'Sessioni aperte')); ss.appendChild(el('div', '', ''));
     cv.appendChild(u); cv.appendChild(ss);
     cvSig = '';
     return cv;
@@ -210,20 +223,22 @@
   function renderClaude(cl) {
     var u = $('cvu'), ss = $('cvs');
     if (!u || !ss || !cl) { return; }
-    var sig = JSON.stringify([cl.tabs, cl.usage, cl.age === null || cl.age > 25]) + Math.floor(now() / 60000);
+    var offline = cl.age === null || cl.age > 25;
+    var sig = JSON.stringify([cl.tabs, cl.usage, offline]) + Math.floor(now() / 60000);
     if (sig === cvSig) { return; }
     cvSig = sig;
-    var ub = u.childNodes[1], sb = ss.childNodes[1];
+    var ub = u.childNodes[1], sb = ss.childNodes[1], pal = PAL[theme];
     ub.innerHTML = ''; sb.innerHTML = '';
-    var offline = cl.age === null || cl.age > 25;
     if (offline) {
       ub.appendChild(el('div', 'cvmsg', 'Estensione di Edge non collegata'));
-      sb.appendChild(el('div', 'cvmsg', 'Apri Edge con l\u2019estensione installata (vedi edge-extension/LEGGIMI.txt).'));
+      sb.appendChild(el('div', 'cvmsg', 'Apri Edge con l’estensione installata (vedi edge-extension/LEGGIMI.txt).'));
       return;
     }
     if (cl.usage && (cl.usage.fiveHour || cl.usage.week)) {
-      ub.appendChild(usageBar('Limite di 5 ore', cl.usage.fiveHour, false));
-      ub.appendChild(usageBar('Settimanale', cl.usage.week, true));
+      var row = el('div', 'cvl');
+      row.appendChild(limitDial('Limite di 5 ore', cl.usage.fiveHour, false));
+      row.appendChild(limitDial('Settimanale', cl.usage.week, true));
+      ub.appendChild(row);
     } else {
       ub.appendChild(el('div', 'cvmsg', 'Limiti non disponibili' + (cl.usage && cl.usage.error ? ': ' + cl.usage.error : ' (in lettura...)')));
     }
@@ -233,32 +248,39 @@
     order.forEach(function (w, wi) {
       var tabs = wins[w], counts = {}, best = '', bc = 0;
       tabs.forEach(function (t) { if (t.project) { counts[t.project] = (counts[t.project] || 0) + 1; if (counts[t.project] > bc) { bc = counts[t.project]; best = t.project; } } });
-      var row = el('div', 'sr'), pn = el('div', 'pn'), chs = el('div', 'chs');
-      pn.appendChild(document.createTextNode(best || 'Finestra ' + (wi + 1))); row.appendChild(pn);
+      var gh = el('div', 'gh'); gh.appendChild(document.createTextNode(best || 'Finestra ' + (wi + 1))); sb.appendChild(gh);
       tabs.forEach(function (t) {
-        var c = el('button', 'ch' + (t.active ? ' on' : ''));
-        c.appendChild(document.createTextNode(t.name || (t.title && t.title !== 'Claude Code' ? t.title : (t.kind === 'chat' ? 'Chat' : 'Sessione'))));
-        if (t.context !== null && t.context !== undefined) { c.appendChild(el('em', 'cx' + (t.context >= 85 ? ' hot' : t.context >= 70 ? ' warn' : ''), t.context + '%')); }
-        c.addEventListener('click', function () { api('POST', '/api/claude/focus', { tabId: t.id, windowId: t.windowId }); });
-        chs.appendChild(c);
+        var r = el('div', 'sx' + (t.active ? ' on' : '')), nm = el('div', 'nm');
+        nm.appendChild(document.createTextNode(t.name || (t.title && t.title !== 'Claude Code' ? t.title : (t.kind === 'chat' ? 'Chat' : 'Sessione'))));
+        r.appendChild(nm);
+        r.insertAdjacentHTML('beforeend', stIcon(t.status || 'idle'));
+        if (t.context !== null && t.context !== undefined) {
+          var cc = el('div', 'cx2');
+          cc.innerHTML = dial(t.context, 46, 5, t.context >= 85 ? pal.dng : t.context >= 70 ? '#f5a623' : pal.acc, t.context, 13);
+          r.appendChild(cc);
+        }
+        r.addEventListener('click', function () { api('POST', '/api/claude/focus', { tabId: t.id, windowId: t.windowId }); });
+        sb.appendChild(r);
       });
-      row.appendChild(chs); sb.appendChild(row);
     });
   }
 
+  /* ---- schede e pagina ---- */
+  function pageById(id) { var i; for (i = 0; i < cfg.pages.length; i++) { if (cfg.pages[i].id === id) { return cfg.pages[i]; } } return null; }
   function buildPage() {
-    var tabs = $('tabs'), deck = $('deck'), i, cur = null;
+    var tabs = $('tabs'), deck = $('deck');
     if (!tabs || !cfg) { return; }
     tabs.innerHTML = ''; deck.innerHTML = '';
-    for (i = 0; i < cfg.pages.length; i++) { if (cfg.pages[i].id === page) { cur = cfg.pages[i]; } }
+    var cur = pageById(page);
     if (!cur && cfg.pages.length) { cur = cfg.pages[0]; page = cur.id; }
     cfg.pages.forEach(function (p) {
-      var t = el('button', 'tab' + (p.id === page ? ' on' : '')); t.appendChild(document.createTextNode(p.name));
-      t.addEventListener('click', function () { page = p.id; buildPage(); });
+      var t = el('button', 'tab' + (p.id === page ? ' on' : ''), ic(p.icon || 'desk'));
+      var l = el('span', 'tl'); l.appendChild(document.createTextNode(p.name)); t.appendChild(l);
+      t.addEventListener('click', function () { goPage(p.id); });
       tabs.appendChild(t);
     });
     if (cur && cur.view === 'claude') {
-      deck.appendChild(claudeShell(cur));
+      deck.appendChild(claudeShell());
       if (lastState) { renderClaude(lastState.claude); }
     } else if (cur) {
       cur.buttons.forEach(function (b) {
@@ -269,25 +291,40 @@
     }
   }
 
-  function buildAll() {
+  /* ---- costruzione dell'interfaccia ---- */
+  function buildAll(opts) {
     if (!cfg) { return; }
     ctls = {};
-    stage.className = 't-' + theme + ' ' + orient;
+    var mode = modeOf();
+    stage.className = 't-' + theme + ' ' + orient + (orient === 'land' ? ' ' + mode : '') + (opts && opts.from ? ' fade' : '');
     stage.innerHTML = '';
     var c1 = el('section', 'card', '<div id="clock">--:--<small>--</small></div><div id="date">&nbsp;</div>'); c1.id = 'c1';
-    var sys = el('section', 'card', '<div><div class="ms">CPU<b id="cpuval">--</b></div><div class="bar"><i id="cpubar"></i></div></div><div><div class="ms">RAM<b id="ramval">--</b></div><div class="bar"><i id="rambar"></i></div></div>'); sys.id = 'sys';
+    var pal = PAL[theme], sd = orient === 'land' ? (mode === 'idle' ? 74 : 50) : 60;
+    var sys = el('section', 'card', '<div id="cpuk">' + dial(0, sd, 5, pal.acc, '--', 13, 'CPU') + '</div><div id="ramk">' + dial(0, sd, 5, pal.acc, '--', 13, 'RAM') + '</div>'); sys.id = 'sys';
     var c2 = el('section', 'card', '<div id="now"><div id="art">' + ic('note') + '</div><div id="meta"><div id="song">Spotify</div><div id="artist">&nbsp;</div></div></div>' +
-      '<div id="tr"><button class="tb" data-cmd="prev">' + ic('prev') + '</button><button class="tb big" id="ppbtn" data-cmd="playpause">' + ic('pp') + '</button><button class="tb" data-cmd="next">' + ic('next') + '</button><button class="tb" data-cmd="mute">' + ic('mute') + '</button></div>'); c2.id = 'c2';
+      '<div id="tr"><button class="tb" data-cmd="prev">' + ic('prev') + '</button><button class="tb big" id="ppbtn" data-cmd="playpause">' + ic('pp') + '</button><button class="tb" data-cmd="next">' + ic('next') + '</button></div>'); c2.id = 'c2';
     var vol = el('section', 'card'); vol.id = 'vol';
     var m = el('div'); m.id = 'master'; m.appendChild(control('master', 'Volume PC', 'lg'));
     var a = el('div'); a.id = 'apps';
     cfg.volumeApps.forEach(function (v) { var d = el('div', 'app'); d.appendChild(control(v.id, v.label, 'sm')); a.appendChild(d); });
     vol.appendChild(m); vol.appendChild(a);
+    // comandi desktop: in orizzontale con un programma i grandi sono precedente/successivo (ordine "app"); a riposo e in verticale ordine del file
     var desk = el('section'); desk.id = 'deskrow';
-    cfg.desktop.forEach(function (b) { desk.appendChild(keyButton(b, ' dkb' + ((b.span || 1) > 1 ? ' wide' : ''))); });
+    var list = cfg.desktop.slice(), appMode = orient === 'land' && mode === 'app';
+    if (appMode) { list.sort(function (x, y) { return (x.appOrder || 0) - (y.appOrder || 0); }); }
+    list.forEach(function (b) {
+      var k = keyButton(b, ' dkb');
+      if (appMode) { k.style.gridColumn = 'span ' + (b.appSpan || 2); }
+      else { var f = b.flex || 1; k.style.webkitFlex = f; k.style.flex = f; }
+      desk.appendChild(k);
+    });
     var strip = el('section', '', '<div id="tabs"></div>'); strip.id = 'strip';
     var deck = el('section'); deck.id = 'deck';
-    [c1, sys, c2, vol, desk, strip, deck].forEach(function (n) { stage.appendChild(n); });
+    var left = el('div'); left.id = 'leftcol'; var top2 = el('div'); top2.id = 'toprow';
+    top2.appendChild(c1); top2.appendChild(sys);
+    left.appendChild(top2); left.appendChild(c2); left.appendChild(vol); left.appendChild(desk);
+    var right = el('div'); right.id = 'rightcol'; right.appendChild(strip); right.appendChild(deck);
+    stage.appendChild(left); stage.appendChild(right);
     if (theme === 'dj') {
       var w = '<svg class="wave" viewBox="0 0 500 60" preserveAspectRatio="none">', x, q;
       for (x = 0; x < 500; x += 4) { q = 7 + Math.abs(Math.sin(x / 17) * Math.sin(x / 53)) * 22; w += '<rect x="' + x + '" y="' + (30 - q) + '" width="2" height="' + (q * 2) + '" fill="' + (x < 220 ? '#2f9bff' : '#1c4f8a') + '"/>'; }
@@ -309,12 +346,26 @@
     buildPage(); fit(); tick();
     if (lastState) { render(lastState); }
     Object.keys(ctls).forEach(function (k) { ctls[k].draw(); });
+    if (opts && opts.from) {
+      // la colonna di sinistra parte dalla larghezza della modalita' precedente e si porta a quella nuova
+      var lc = $('leftcol'); lc.style.width = opts.from === 'idle' ? '880px' : '360px';
+      void lc.offsetWidth; lc.style.width = '';
+      setTimeout(function () { stage.className = stage.className.replace(' fade', ''); }, 200);
+    }
+  }
+
+  // cambio pagina: se cambia anche la modalita' (riposo <-> programma) c'e' la transizione
+  function goPage(k) {
+    var prev = modeOf();
+    page = k;
+    if (orient !== 'land' || prev === modeOf()) { if (prev !== modeOf()) { buildAll(); } else { buildPage(); } return; }
+    stage.className += ' fade';
+    setTimeout(function () { buildAll({ from: prev }); }, 150);
   }
 
   /* ---- orologio ---- */
   var DAYS = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'];
   var MONTHS = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
-  function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function tick() {
     var d = new Date(), c = $('clock');
     if (!c) { return; }
@@ -324,11 +375,11 @@
   setInterval(tick, 1000);
 
   /* ---- stato ---- */
-  var lastState = null;
   function render(s) {
-    if (!$('cpubar')) { return; }
-    $('cpubar').style.width = s.stats.cpu + '%'; $('cpuval').textContent = s.stats.cpu + '%';
-    $('rambar').style.width = s.stats.ram + '%'; $('ramval').textContent = s.stats.ram + '%';
+    if (!$('cpuk')) { return; }
+    var pal = PAL[theme], sd = orient === 'land' ? (modeOf() === 'idle' ? 74 : 50) : 60;
+    $('cpuk').innerHTML = dial(s.stats.cpu, sd, 5, pal.acc, s.stats.cpu + '%', 13, 'CPU');
+    $('ramk').innerHTML = dial(s.stats.ram, sd, 5, pal.acc, s.stats.ram + '%', 13, 'RAM');
     var sp = s.spotify, song, artist;
     if (!sp.running) { song = 'Spotify non aperto'; artist = 'Apri Spotify sul PC'; }
     else if (!sp.playing) { song = 'In pausa'; artist = 'Spotify'; }
@@ -346,7 +397,6 @@
       }
     }
   }
-  function pageExists(id) { var i; for (i = 0; i < cfg.pages.length; i++) { if (cfg.pages[i].id === id) { return true; } } return false; }
 
   function poll() {
     api('GET', '/api/state', null, function (err, s) {
@@ -361,7 +411,7 @@
           render(s); applyVolumes(s.volume || {}); renderClaude(s.claude);
           if (cfg && s.profile !== autoProfile) {
             autoProfile = s.profile;
-            if (pageExists(s.profile) && s.profile !== page) { page = s.profile; buildPage(); }
+            if (pageById(s.profile) && s.profile !== page) { goPage(s.profile); }
           }
         }
       }

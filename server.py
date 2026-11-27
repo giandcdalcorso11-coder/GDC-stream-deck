@@ -684,7 +684,8 @@ def clean_claude(body):
 
 def public_button(b):
     return {"id": b.get("id"), "label": b.get("label", ""), "icon": b.get("icon", ""),
-            "cat": b.get("cat", "sys"), "span": b.get("span", 1), "small": bool(b.get("small"))}
+            "cat": b.get("cat", "sys"), "span": b.get("span", 1), "small": bool(b.get("small")),
+            "flex": b.get("flex", 1), "appOrder": b.get("appOrder", 0), "appSpan": b.get("appSpan", 2)}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -720,7 +721,7 @@ class Handler(BaseHTTPRequestHandler):
                     "theme": data["settings"].get("theme", "windows"),
                     "volumeApps": [{"id": a["id"], "label": a.get("label", a["id"])} for a in data["volumeApps"]],
                     "desktop": [public_button(b) for b in data["desktop"]],
-                    "pages": [{"id": p.get("id"), "name": p.get("name", ""), "view": p.get("view", ""),
+                    "pages": [{"id": p.get("id"), "name": p.get("name", ""), "view": p.get("view", ""), "icon": p.get("icon", ""),
                                "buttons": [public_button(b) for b in p.get("buttons", [])]} for p in data["pages"]]})
             if u.path == "/api/state":
                 cl = dict(CLAUDE)

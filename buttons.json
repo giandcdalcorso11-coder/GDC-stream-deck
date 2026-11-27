@@ -1,64 +1,348 @@
 {
-  "settings": { "port": 8080, "token": "", "theme": "windows" },
-
+  "settings": {
+    "port": 8080,
+    "token": "",
+    "theme": "windows"
+  },
   "volumeApps": [
-    { "id": "spotify", "label": "Spotify", "exe": "spotify.exe" },
-    { "id": "edge",    "label": "Edge",    "exe": "msedge.exe" },
-    { "id": "discord", "label": "Discord", "exe": "discord.exe" }
+    {
+      "id": "spotify",
+      "label": "Spotify",
+      "exe": "spotify.exe"
+    },
+    {
+      "id": "edge",
+      "label": "Edge",
+      "exe": "msedge.exe"
+    },
+    {
+      "id": "discord",
+      "label": "Discord",
+      "exe": "discord.exe"
+    }
   ],
-
   "desktop": [
-    { "id": "dk-prev",  "label": "Desktop<br>precedente",   "icon": "left",     "cat": "sys",    "action": { "type": "hotkey", "keys": "win+ctrl+left" } },
-    { "id": "dk-next",  "label": "Desktop<br>successivo",   "icon": "right",    "cat": "sys",    "action": { "type": "hotkey", "keys": "win+ctrl+right" } },
-    { "id": "dk-view",  "label": "Panoramica<br>di tutte le app", "icon": "overview", "cat": "work", "span": 2, "action": { "type": "hotkey", "keys": "win+tab" } },
-    { "id": "dk-new",   "label": "Nuovo<br>desktop",        "icon": "plus",     "cat": "audio",  "action": { "type": "hotkey", "keys": "win+ctrl+d" } },
-    { "id": "dk-close", "label": "Chiudi<br>desktop",       "icon": "xx",       "cat": "danger", "action": { "type": "hotkey", "keys": "win+ctrl+f4" } }
+    {
+      "id": "dk-prev",
+      "label": "Desktop<br>precedente",
+      "icon": "left",
+      "cat": "sys",
+      "action": {
+        "type": "hotkey",
+        "keys": "win+ctrl+left"
+      },
+      "flex": 1.6,
+      "appOrder": 4,
+      "appSpan": 3
+    },
+    {
+      "id": "dk-next",
+      "label": "Desktop<br>successivo",
+      "icon": "right",
+      "cat": "sys",
+      "action": {
+        "type": "hotkey",
+        "keys": "win+ctrl+right"
+      },
+      "flex": 1.6,
+      "appOrder": 5,
+      "appSpan": 3
+    },
+    {
+      "id": "dk-view",
+      "label": "Panoramica<br>di tutte le app",
+      "icon": "overview",
+      "cat": "work",
+      "action": {
+        "type": "hotkey",
+        "keys": "win+tab"
+      },
+      "flex": 1.4,
+      "appOrder": 3,
+      "appSpan": 2
+    },
+    {
+      "id": "dk-new",
+      "label": "Nuovo<br>desktop",
+      "icon": "plus",
+      "cat": "audio",
+      "action": {
+        "type": "hotkey",
+        "keys": "win+ctrl+d"
+      },
+      "flex": 1,
+      "appOrder": 1,
+      "appSpan": 2
+    },
+    {
+      "id": "dk-close",
+      "label": "Chiudi<br>desktop",
+      "icon": "xx",
+      "cat": "danger",
+      "action": {
+        "type": "hotkey",
+        "keys": "win+ctrl+f4"
+      },
+      "flex": 1,
+      "appOrder": 2,
+      "appSpan": 2
+    }
   ],
-
   "pages": [
     {
-      "id": "default", "name": "Predefinito", "match": [],
+      "id": "default",
+      "name": "Predefinito",
+      "match": [],
       "buttons": [
-        { "id": "youtube", "label": "YouTube",          "icon": "video", "cat": "audio", "span": 2, "action": { "type": "url", "url": "https://www.youtube.com" } },
-        { "id": "taskmgr", "label": "Gestione attività", "icon": "task",  "cat": "sys",   "span": 2, "action": { "type": "hotkey", "keys": "ctrl+shift+esc" } },
-        { "id": "saver",   "label": "Screen saver",     "icon": "saver", "cat": "work",  "span": 2, "action": { "type": "saver" } },
-        { "id": "showdesk","label": "Mostra desktop",   "icon": "desk",  "cat": "sys",   "small": true, "action": { "type": "hotkey", "keys": "win+d" } },
-        { "id": "shot",    "label": "Screenshot",       "icon": "shot",  "cat": "work",  "small": true, "action": { "type": "hotkey", "keys": "win+shift+s" } }
-      ]
+        {
+          "id": "youtube",
+          "label": "YouTube",
+          "icon": "video",
+          "cat": "audio",
+          "span": 2,
+          "action": {
+            "type": "url",
+            "url": "https://www.youtube.com"
+          }
+        },
+        {
+          "id": "taskmgr",
+          "label": "Gestione attività",
+          "icon": "task",
+          "cat": "sys",
+          "span": 2,
+          "action": {
+            "type": "hotkey",
+            "keys": "ctrl+shift+esc"
+          }
+        },
+        {
+          "id": "saver",
+          "label": "Screen saver",
+          "icon": "saver",
+          "cat": "work",
+          "span": 2,
+          "action": {
+            "type": "saver"
+          }
+        },
+        {
+          "id": "showdesk",
+          "label": "Mostra desktop",
+          "icon": "desk",
+          "cat": "sys",
+          "small": true,
+          "action": {
+            "type": "hotkey",
+            "keys": "win+d"
+          }
+        },
+        {
+          "id": "shot",
+          "label": "Screenshot",
+          "icon": "shot",
+          "cat": "work",
+          "small": true,
+          "action": {
+            "type": "hotkey",
+            "keys": "win+shift+s"
+          }
+        }
+      ],
+      "icon": "desk"
     },
     {
-      "id": "claude", "name": "Claude", "view": "claude", "match": ["msedge.exe"], "matchTitle": ["Claude"],
-      "buttons": [
-        { "id": "cl-new",   "label": "Nuova",     "icon": "chat",  "cat": "work",  "action": { "type": "url", "url": "https://claude.ai/code" } },
-        { "id": "cl-usage", "label": "Utilizzo",  "icon": "globe", "cat": "sys",   "action": { "type": "url", "url": "https://claude.ai/settings/usage" } },
-        { "id": "cl-dict",  "label": "Dettatura", "icon": "mic",   "cat": "audio", "action": { "type": "hotkey", "keys": "win+h" } }
-      ]
+      "id": "claude",
+      "name": "Claude",
+      "view": "claude",
+      "match": [
+        "msedge.exe"
+      ],
+      "matchTitle": [
+        "Claude"
+      ],
+      "buttons": [],
+      "icon": "chat"
     },
     {
-      "id": "resolve", "name": "DaVinci", "match": ["resolve.exe"],
+      "id": "resolve",
+      "name": "DaVinci",
+      "match": [
+        "resolve.exe"
+      ],
       "buttons": [
-        { "id": "dv-play",  "label": "Play / Pausa", "icon": "play",    "cat": "audio",  "action": { "type": "hotkey", "keys": "space" } },
-        { "id": "dv-cut",   "label": "Taglia",       "icon": "blade",   "cat": "work",   "action": { "type": "hotkey", "keys": "ctrl+backslash" } },
-        { "id": "dv-undo",  "label": "Annulla",      "icon": "undo",    "cat": "sys",    "action": { "type": "hotkey", "keys": "ctrl+z" } },
-        { "id": "dv-save",  "label": "Salva",        "icon": "save",    "cat": "sys",    "action": { "type": "hotkey", "keys": "ctrl+s" } },
-        { "id": "dv-in",    "label": "Segna IN",     "icon": "markin",  "cat": "sys",    "action": { "type": "hotkey", "keys": "i" } },
-        { "id": "dv-out",   "label": "Segna OUT",    "icon": "markout", "cat": "sys",    "action": { "type": "hotkey", "keys": "o" } },
-        { "id": "dv-mark",  "label": "Marker",       "icon": "flag",    "cat": "work",   "action": { "type": "hotkey", "keys": "m" } },
-        { "id": "dv-del",   "label": "Elimina",      "icon": "trash",   "cat": "danger", "action": { "type": "hotkey", "keys": "delete" } }
-      ]
+        {
+          "id": "dv-play",
+          "label": "Play / Pausa",
+          "icon": "play",
+          "cat": "audio",
+          "action": {
+            "type": "hotkey",
+            "keys": "space"
+          }
+        },
+        {
+          "id": "dv-cut",
+          "label": "Taglia",
+          "icon": "blade",
+          "cat": "work",
+          "action": {
+            "type": "hotkey",
+            "keys": "ctrl+backslash"
+          }
+        },
+        {
+          "id": "dv-undo",
+          "label": "Annulla",
+          "icon": "undo",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "ctrl+z"
+          }
+        },
+        {
+          "id": "dv-save",
+          "label": "Salva",
+          "icon": "save",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "ctrl+s"
+          }
+        },
+        {
+          "id": "dv-in",
+          "label": "Segna IN",
+          "icon": "markin",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "i"
+          }
+        },
+        {
+          "id": "dv-out",
+          "label": "Segna OUT",
+          "icon": "markout",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "o"
+          }
+        },
+        {
+          "id": "dv-mark",
+          "label": "Marker",
+          "icon": "flag",
+          "cat": "work",
+          "action": {
+            "type": "hotkey",
+            "keys": "m"
+          }
+        },
+        {
+          "id": "dv-del",
+          "label": "Elimina",
+          "icon": "trash",
+          "cat": "danger",
+          "action": {
+            "type": "hotkey",
+            "keys": "delete"
+          }
+        }
+      ],
+      "icon": "blade"
     },
     {
-      "id": "bambu", "name": "Bambu Studio", "match": ["bambu-studio.exe"],
+      "id": "bambu",
+      "name": "Bambu Studio",
+      "match": [
+        "bambu-studio.exe"
+      ],
       "buttons": [
-        { "id": "bs-slice",  "label": "Slice",    "icon": "layers",  "cat": "work",   "action": { "type": "hotkey", "keys": "ctrl+r" } },
-        { "id": "bs-print",  "label": "Stampa",   "icon": "printer", "cat": "danger", "action": { "type": "hotkey", "keys": "ctrl+p" } },
-        { "id": "bs-arr",    "label": "Disponi",  "icon": "arrange", "cat": "sys",    "action": { "type": "hotkey", "keys": "a" } },
-        { "id": "bs-orient", "label": "Orienta",  "icon": "rotate",  "cat": "sys",    "action": { "type": "hotkey", "keys": "o" } },
-        { "id": "bs-move",   "label": "Sposta",   "icon": "move",    "cat": "sys",    "action": { "type": "hotkey", "keys": "m" } },
-        { "id": "bs-scale",  "label": "Scala",    "icon": "scale",   "cat": "sys",    "action": { "type": "hotkey", "keys": "s" } },
-        { "id": "bs-iso",    "label": "Vista iso","icon": "cube",    "cat": "sys",    "action": { "type": "hotkey", "keys": "0" } },
-        { "id": "bs-save",   "label": "Salva",    "icon": "save",    "cat": "sys",    "action": { "type": "hotkey", "keys": "ctrl+s" } }
-      ]
+        {
+          "id": "bs-slice",
+          "label": "Slice",
+          "icon": "layers",
+          "cat": "work",
+          "action": {
+            "type": "hotkey",
+            "keys": "ctrl+r"
+          }
+        },
+        {
+          "id": "bs-print",
+          "label": "Stampa",
+          "icon": "printer",
+          "cat": "danger",
+          "action": {
+            "type": "hotkey",
+            "keys": "ctrl+p"
+          }
+        },
+        {
+          "id": "bs-arr",
+          "label": "Disponi",
+          "icon": "arrange",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "a"
+          }
+        },
+        {
+          "id": "bs-orient",
+          "label": "Orienta",
+          "icon": "rotate",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "o"
+          }
+        },
+        {
+          "id": "bs-move",
+          "label": "Sposta",
+          "icon": "move",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "m"
+          }
+        },
+        {
+          "id": "bs-scale",
+          "label": "Scala",
+          "icon": "scale",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "s"
+          }
+        },
+        {
+          "id": "bs-iso",
+          "label": "Vista iso",
+          "icon": "cube",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "0"
+          }
+        },
+        {
+          "id": "bs-save",
+          "label": "Salva",
+          "icon": "save",
+          "cat": "sys",
+          "action": {
+            "type": "hotkey",
+            "keys": "ctrl+s"
+          }
+        }
+      ],
+      "icon": "cube"
     }
   ]
 }
