@@ -1,7 +1,7 @@
 # Documento di Sessione — GDC Stream Deck
 
-**Versione:** 9
-**Ultimo aggiornamento:** 2026-11-27 21:00
+**Versione:** 10
+**Ultimo aggiornamento:** 2026-11-28 14:00
 
 ## Vision
 
@@ -9,6 +9,10 @@ Trasformare un vecchio iPad Air 1 (iOS 12.5.8, 16 GB) in un pannello da scrivani
 orologio, controllo di Spotify (app desktop) e pulsanti personalizzabili in stile Stream Deck. La pagina web
 deve girare su Safari 12 (solo JavaScript ES5, CSS senza funzioni moderne) e la configurazione dei pulsanti
 deve essere modificabile da file, senza toccare il codice. Il pannello deve restare sempre acceso in carica.
+
+Ampliamento del 2026-11-27: il pannello mostra anche volume di sistema e per app, quattro stili grafici, pagine che cambiano
+da sole col programma in primo piano (Claude, DaVinci Resolve, Bambu Studio) e, tramite un'estensione di Edge, limiti di
+utilizzo, contesto e stato delle sessioni di Claude Code; si aggiorna da solo dal repository GitHub.
 
 ## Pipeline
 
@@ -42,10 +46,12 @@ perché finora è stata provata solo in modalità simulata su Linux.
 - [2026-11-25] Da fare al primo avvio sul PC; nessun esito ancora.
 - [2026-11-26] Revisione del codice Windows fatta a tavolino (nessun difetto trovato nelle chiamate ctypes, tasti e CPU/RAM), ma ancora non provato su Windows vero.
 - [2026-11-26] Prova su PC Windows: l'utente conferma che il server parte e i pulsanti funzionano. Ancora da confermare: brano/artista di Spotify e tasti multimediali.
+- [2026-11-26] L'utente conferma che Spotify (brano e artista) funziona.
+- [2026-11-27] Dalle foto dell'iPad: brano letto correttamente e volume di sistema e di Spotify letti (60% e 100%); Edge e Discord restano spenti quando non usano l'audio (atteso). Non ancora confermati: tasti multimediali e controllo del volume in scrittura, Screen saver, scorciatoie di DaVinci e Bambu.
 
 ### Step 3 — Prova su iPad e avvio automatico
 
-**Stato:** da fare
+**Stato:** in corso
 
 **Obiettivo:** verificare il pannello sull'iPad Air 1 reale (Safari 12), con Home, Blocco automatico su Mai e Accesso Guidato.
 
@@ -56,10 +62,12 @@ perché finora è stata provata solo in modalità simulata su Linux.
 **Note (cronologia dello step):**
 - [2026-11-25] Da fare.
 - [2026-11-26] L'utente conferma: nessuna app nativa, solo collegamento Home da Safari.
+- [2026-11-26] Pannello visto sull'iPad vero. Problemi: pagina vecchia da icona Home (cache; risolto aprendo da Safari) e rotazione errata (corretta, da confermare).
+- [2026-11-27] Layout nuovo (due modalita' in orizzontale) visto in foto con la versione 1-2; la versione 3 e' stata pubblicata ma non ancora commentata. Da confermare: rotazione, animazione tra le modalita', Blocco automatico e Accesso Guidato.
 
 ### Step 4 — Copertina Spotify (opzionale)
 
-**Stato:** da fare
+**Stato:** scartato
 
 **Obiettivo:** mostrare la copertina del brano tramite le API di Spotify.
 
@@ -69,6 +77,7 @@ perché finora è stata provata solo in modalità simulata su Linux.
 
 **Note (cronologia dello step):**
 - [2026-11-25] Proposto all'utente, non ancora deciso.
+- [2026-11-26] L'utente: "mi basta il pannello cosi'": non si fa (si riprende solo se lo richiede).
 
 ### Step 5 — Pagine dei programmi (Claude, DaVinci Resolve, Bambu Studio)
 
@@ -82,6 +91,7 @@ perché finora è stata provata solo in modalità simulata su Linux.
 
 **Note (cronologia dello step):**
 - [2026-11-26] Pagine inserite con tasti provvisori; da verificare le scorciatoie reali e cosa usa l'utente di Claude (app, sito o Claude Code).
+- [2026-11-27] L'utente usa Claude Code sul sito in Edge: la pagina Claude diventa una vista con limiti e sessioni (vedi Step 8). Pagine DaVinci e Bambu ancora con tasti provvisori, da verificare nei programmi.
 
 ### Step 6 — Icona nell'area di notifica
 
@@ -108,8 +118,46 @@ perché finora è stata provata solo in modalità simulata su Linux.
 
 **Note (cronologia dello step):**
 - [2026-11-27] Implementato e provato in locale; da provare con una vera pubblicazione dopo l'installazione di questa versione.
+- [2026-11-27] Indirizzi di GitHub verificati dal lato di Claude (funzionano). L'utente ha scritto "non si aggiorna da solo" e poi "ok, aggiornato" senza dire se l'aggiornamento e' avvenuto in automatico: non confermato.
+
+### Step 8 — Estensione di Edge (limiti, contesto e sessioni di Claude)
+
+**Stato:** in corso
+
+**Obiettivo:** vedere sul pannello i limiti di 5 ore e settimanali, e per ogni sessione di Claude Code in Edge nome, stato (sta rispondendo / finita / ferma) e contesto; toccando una sessione Edge la porta in primo piano.
+
+**Decisioni progettuali:** estensione in modalita' sviluppatore con permessi dichiarati una sola volta; si inserisce da sola nelle schede aperte e si ricarica da sola quando cambia la versione; limiti dall'API interna del sito con ripiego sul testo della pagina.
+
+**Criterio di completamento:** l'utente conferma che nomi, stati, contesto e limiti sono corretti e che il tocco cambia scheda.
+
+**Note (cronologia dello step):**
+- [2026-11-27] Estensione costruita e provata con pagine finte. L'utente conferma "ora i dati arrivano" (limiti, sessioni, contesto). Da affinare: nomi sessione (frasi di stato escluse), lettura dello stato "sta rispondendo" dal sito vero, scorrimento dell'elenco (ora circa 7 righe visibili).
 
 ## Storico sessioni
+
+### [2026-11-28 14:00] Allineamento del documento e punto della situazione
+
+**Riepilogo:** il documento e' stato riallineato allo stato reale del progetto (step aggiornati, nuovo Step 8, Vision ampliata) e sono elencate le cose ancora da confermare o da fare.
+
+**Cosa e' stato fatto:**
+- Aggiornati gli step 2, 3, 4, 5, 7 con le conferme e i dubbi emersi dalle foto e dai messaggi dell'utente; Step 4 segnato "scartato"; aggiunto Step 8 (estensione di Edge); ampliata la Vision.
+- Rettifica: la voce del 2026-11-27 21:00 era intitolata "Aggiornamento automatico confermato", ma l'utente aveva solo scritto "ok, aggiornato": non risulta confermato che l'aggiornamento sia avvenuto in automatico (vedi Step 7). La voce precedente non e' stata modificata.
+
+**Stato attuale in breve:** pubblicata la versione 3 del pannello (layout a due modalita', pagina Claude con limiti/stati/contesto, tocco su sessione, contorni tolti). Provato solo in simulazione: animazione e layout su iPad, tasti multimediali e scrittura del volume su Windows, stato "sta rispondendo" sul sito vero.
+
+**Cose aperte o da decidere:**
+- Confermare la rotazione dell'iPad dopo la correzione.
+- Verificare scorciatoie di DaVinci Resolve e Bambu Studio.
+- Scorrimento dell'elenco sessioni oltre le circa 7 righe visibili.
+- Eventuale rimozione dello sfondo grigio delle righe di sessione (chiesto all'utente, nessuna risposta).
+- Step 6: icona nell'area di notifica (non iniziato).
+- Mockup: pagine Claude e a riposo gia' nel codice; il mockup in artifact resta come riferimento.
+
+**File consegnati/modificati:** `documento-sessione-gdc-stream-deck.md`
+
+**Impatto su Vision/Pipeline:** Vision ampliata; step 2, 3, 4, 5, 7 aggiornati; nuovo Step 8.
+
+---
 
 ### [2026-11-27 21:00] Aggiornamento automatico confermato e ritocchi grafici
 
